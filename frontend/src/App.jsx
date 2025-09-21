@@ -1,5 +1,5 @@
 
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import { AuthProvider } from './context/AuthContext';
 import { BookingProvider } from './context/BookingContext';
@@ -9,23 +9,22 @@ import { Navbar, SubNavigation } from './components';
 // Pages
 import Home from './pages/Home';
 import Movies from './pages/Movies';
+import Login from './pages/Login';
+import Register from './pages/Register';
 // import Sports from './pages/Sports';
 // import Buses from './pages/Buses';
 // import Booking from './pages/Booking';
 // import Payment from './pages/Payment';
 // import Profile from './pages/Profile';
-// import Login from './pages/Login';
-// import Register from './pages/Register';
 
 import './App.css';
 
 // Layout component to conditionally show navigation
 const Layout = ({ children }) => {
-  const location = useLocation();
   const { user } = useAuth();
   
-  // Hide navigation on auth pages
-  const hideNavigation = ['/login', '/register'].includes(location.pathname);
+  // Show navigation on all pages now
+  const hideNavigation = false; // Changed to always show navbar
   
   const handleSearch = (searchTerm) => {
     console.log('Search:', searchTerm);
@@ -76,6 +75,8 @@ const App = () => {
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/movies" element={<Movies />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/signup" element={<Register />} />
               {/* 
               <Route path="/movies/:id" element={<MovieDetails />} />
               <Route path="/movies/:id/book" element={<MovieBooking />} />
@@ -88,8 +89,6 @@ const App = () => {
               <Route path="/booking/:id" element={<BookingDetails />} />
               <Route path="/payment" element={<Payment />} />
               <Route path="/profile" element={<Profile />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
               <Route path="*" element={<NotFound />} />
               */}
             </Routes>
