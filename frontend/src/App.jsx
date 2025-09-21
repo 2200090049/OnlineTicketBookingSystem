@@ -1,5 +1,5 @@
 
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import { AuthProvider } from './context/AuthContext';
 import { BookingProvider } from './context/BookingContext';
@@ -12,17 +12,18 @@ import Home from './pages/Home';
 import Movies from './pages/Movies';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import Profile from './pages/Profile';
 // import Sports from './pages/Sports';
 // import Buses from './pages/Buses';
 // import Booking from './pages/Booking';
 // import Payment from './pages/Payment';
-// import Profile from './pages/Profile';
 
 import './App.css';
 
 // Layout component to conditionally show navigation
 const Layout = ({ children }) => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   
   // Show navigation on all pages now
   const hideNavigation = false; // Changed to always show navbar
@@ -34,7 +35,7 @@ const Layout = ({ children }) => {
   
   const handleProfileClick = () => {
     console.log('Profile clicked');
-    // Navigate to profile page
+    navigate('/profile');
   };
   
   const handleNotificationClick = () => {
@@ -86,6 +87,7 @@ const App = () => {
                   <Register />
                 </AuthGuard>
               } />
+              <Route path="/profile" element={<Profile />} />
               {/* 
               <Route path="/movies/:id" element={<MovieDetails />} />
               <Route path="/movies/:id/book" element={<MovieBooking />} />
@@ -97,7 +99,6 @@ const App = () => {
               <Route path="/booking" element={<Booking />} />
               <Route path="/booking/:id" element={<BookingDetails />} />
               <Route path="/payment" element={<Payment />} />
-              <Route path="/profile" element={<Profile />} />
               <Route path="*" element={<NotFound />} />
               */}
             </Routes>

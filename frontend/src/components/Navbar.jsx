@@ -51,12 +51,15 @@ const Navbar = ({ user, onSearch, onProfileClick, onNotificationClick }) => {
               <div className="flex items-center space-x-3">
                 <button
                   onClick={onProfileClick}
-                  className="flex items-center space-x-2 p-2 rounded-lg hover:bg-surface transition-colors"
+                  className="flex items-center space-x-2 p-2 rounded-lg hover:bg-surface transition-colors group"
                 >
-                  <UserCircleIcon className="h-8 w-8 text-text-secondary" />
-                  <span className="hidden sm:block text-sm font-medium text-text-primary">
-                    {user.name}
-                  </span>
+                  <UserCircleIcon className="h-8 w-8 text-text-secondary group-hover:text-primary-main transition-colors" />
+                  <div className="hidden sm:block text-left">
+                    <p className="text-sm font-medium text-text-primary group-hover:text-primary-main transition-colors">
+                      {user.name || user.username || 'User'}
+                    </p>
+                    <p className="text-xs text-text-secondary">View Profile</p>
+                  </div>
                 </button>
               </div>
             ) : (
@@ -90,14 +93,32 @@ const Navbar = ({ user, onSearch, onProfileClick, onNotificationClick }) => {
           </div>
         </div>
 
-        {/* Mobile Search Bar */}
+        {/* Mobile Search Bar and User Info */}
         {isMobileMenuOpen && (
-          <div className="md:hidden pb-4">
+          <div className="md:hidden pb-4 border-t border-gray-100 pt-4">
             <SearchBar 
               placeholder="Search movies, events, destinations..."
               onSearch={onSearch}
               size="medium"
             />
+            
+            {/* Mobile User Profile */}
+            {user && (
+              <div className="mt-4 pt-4 border-t border-gray-100">
+                <button
+                  onClick={onProfileClick}
+                  className="flex items-center space-x-3 w-full p-3 rounded-lg hover:bg-surface transition-colors"
+                >
+                  <UserCircleIcon className="h-10 w-10 text-primary-main" />
+                  <div className="text-left">
+                    <p className="font-medium text-text-primary">
+                      {user.name || user.username || 'User'}
+                    </p>
+                    <p className="text-sm text-text-secondary">View Profile</p>
+                  </div>
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -107,7 +128,8 @@ const Navbar = ({ user, onSearch, onProfileClick, onNotificationClick }) => {
 
 Navbar.propTypes = {
   user: PropTypes.shape({
-    name: PropTypes.string.isRequired,
+    name: PropTypes.string,
+    username: PropTypes.string,
     email: PropTypes.string,
   }),
   onSearch: PropTypes.func,
