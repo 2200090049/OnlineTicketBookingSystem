@@ -36,6 +36,15 @@ api.interceptors.response.use(
       localStorage.removeItem('userData');
       window.location.href = '/login';
     }
+    
+    // Handle backend validation errors
+    if (error.response?.status === 400 && error.response?.data?.errors) {
+      // Convert backend validation errors to a more readable format
+      const errors = error.response.data.errors;
+      const errorMessage = Object.values(errors).join(', ');
+      error.message = errorMessage;
+    }
+    
     return Promise.reject(error);
   }
 );
@@ -44,6 +53,7 @@ api.interceptors.response.use(
 export const authAPI = {
   login: (credentials) => api.post('/auth/login', credentials),
   register: (userData) => api.post('/auth/register', userData),
+  verifyOtp: (otpData) => api.post('/auth/verify-otp', otpData),
   logout: () => api.post('/auth/logout'),
   refreshToken: () => api.post('/auth/refresh'),
   forgotPassword: (email) => api.post('/auth/forgot-password', { email }),

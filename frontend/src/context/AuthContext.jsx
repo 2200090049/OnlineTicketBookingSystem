@@ -1,5 +1,6 @@
 import { createContext, useReducer, useEffect } from 'react';
 import PropTypes from 'prop-types';
+import { authAPI } from '../services/api';
 
 // Initial state
 const initialState = {
@@ -18,6 +19,9 @@ const AUTH_ACTIONS = {
   REGISTER_START: 'REGISTER_START',
   REGISTER_SUCCESS: 'REGISTER_SUCCESS',
   REGISTER_FAILURE: 'REGISTER_FAILURE',
+  OTP_VERIFICATION_START: 'OTP_VERIFICATION_START',
+  OTP_VERIFICATION_SUCCESS: 'OTP_VERIFICATION_SUCCESS',
+  OTP_VERIFICATION_FAILURE: 'OTP_VERIFICATION_FAILURE',
   CLEAR_ERROR: 'CLEAR_ERROR',
   SET_USER: 'SET_USER',
 };
@@ -27,6 +31,7 @@ const authReducer = (state, action) => {
   switch (action.type) {
     case AUTH_ACTIONS.LOGIN_START:
     case AUTH_ACTIONS.REGISTER_START:
+    case AUTH_ACTIONS.OTP_VERIFICATION_START:
       return {
         ...state,
         isLoading: true,
@@ -34,7 +39,7 @@ const authReducer = (state, action) => {
       };
     
     case AUTH_ACTIONS.LOGIN_SUCCESS:
-    case AUTH_ACTIONS.REGISTER_SUCCESS:
+    case AUTH_ACTIONS.OTP_VERIFICATION_SUCCESS:
       return {
         ...state,
         user: action.payload.user,
@@ -43,8 +48,17 @@ const authReducer = (state, action) => {
         error: null,
       };
     
+    case AUTH_ACTIONS.REGISTER_SUCCESS:
+      return {
+        ...state,
+        isLoading: false,
+        error: null,
+        // Don't set authenticated yet, waiting for OTP verification
+      };
+    
     case AUTH_ACTIONS.LOGIN_FAILURE:
     case AUTH_ACTIONS.REGISTER_FAILURE:
+    case AUTH_ACTIONS.OTP_VERIFICATION_FAILURE:
       return {
         ...state,
         user: null,
@@ -113,18 +127,11 @@ export const AuthProvider = ({ children }) => {
     dispatch({ type: AUTH_ACTIONS.LOGIN_START });
     
     try {
-      // Simulate API call - replace with actual API
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const response = await authAPI.login({ email, password });
       
-      if (email === 'demo@example.com' && password === 'password') {
-        const user = {
-          id: 1,
-          name: 'Demo User',
-          email: 'demo@example.com',
-          avatar: null,
-        };
-        
-        const token = 'demo-jwt-token';
+      // Backend returns { message, user, token } format
+      if (response.data.message === "Login successful" && response.data.token) {
+        const { user, token } = response.data;
         
         // Store in localStorage
         localStorage.setItem('authToken', token);
@@ -137,50 +144,89 @@ export const AuthProvider = ({ children }) => {
         
         return { success: true };
       } else {
-        throw new Error('Invalid credentials');
+        throw new Error(response.data.message || 'Login failed');
       }
     } catch (error) {
+      const errorMessage = error.response?.data?.message || error.message || 'Login failed';
       dispatch({
         type: AUTH_ACTIONS.LOGIN_FAILURE,
-        payload: { error: error.message },
+        payload: { error: errorMessage },
       });
-      return { success: false, error: error.message };
+      return { success: false, error: errorMessage };
     }
   };
 
-  // Register function
+  // Register function (Step 1: Send registration data)
   const register = async (userData) => {
     dispatch({ type: AUTH_ACTIONS.REGISTER_START });
     
     try {
-      // Simulate API call - replace with actual API
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      const user = {
-        id: Date.now(),
-        name: userData.name,
+      // Prepare data in the format expected by backend
+      const registerData = {
+        username: userData.name, // Backend expects 'username', frontend has 'name'
         email: userData.email,
-        avatar: null,
+        password: userData.password,
+        phone: userData.phone,
       };
       
-      const token = `demo-jwt-token-${Date.now()}`;
+      const response = await authAPI.register(registerData);
       
-      // Store in localStorage
-      localStorage.setItem('authToken', token);
-      localStorage.setItem('userData', JSON.stringify(user));
-      
+      // Registration initiated successfully, OTP sent
       dispatch({
         type: AUTH_ACTIONS.REGISTER_SUCCESS,
-        payload: { user },
+        payload: { message: response.data.message || 'OTP sent successfully' },
       });
       
-      return { success: true };
+      return { 
+        success: true, 
+        message: response.data.message || 'OTP sent to your email',
+        email: userData.email 
+      };
     } catch (error) {
+      const errorMessage = error.response?.data?.message || error.message || 'Registration failed';
       dispatch({
         type: AUTH_ACTIONS.REGISTER_FAILURE,
-        payload: { error: error.message },
+        payload: { error: errorMessage },
       });
-      return { success: false, error: error.message };
+      return { success: false, error: errorMessage };
+    }
+  };
+
+  // OTP Verification function (Step 2: Verify OTP)
+  const verifyOtp = async (email, otp) => {
+    dispatch({ type: AUTH_ACTIONS.OTP_VERIFICATION_START });
+    
+    try {
+      const response = await authAPI.verifyOtp({ email, otp });
+      
+      if (response.data.success || response.data.message === 'Registration successful') {
+        const user = response.data.user || {
+          email: email,
+          username: response.data.username,
+        };
+        
+        // Store token if provided
+        if (response.data.token) {
+          localStorage.setItem('authToken', response.data.token);
+          localStorage.setItem('userData', JSON.stringify(user));
+        }
+        
+        dispatch({
+          type: AUTH_ACTIONS.OTP_VERIFICATION_SUCCESS,
+          payload: { user },
+        });
+        
+        return { success: true };
+      } else {
+        throw new Error(response.data.message || 'OTP verification failed');
+      }
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || error.message || 'OTP verification failed';
+      dispatch({
+        type: AUTH_ACTIONS.OTP_VERIFICATION_FAILURE,
+        payload: { error: errorMessage },
+      });
+      return { success: false, error: errorMessage };
     }
   };
 
@@ -200,6 +246,7 @@ export const AuthProvider = ({ children }) => {
     ...state,
     login,
     register,
+    verifyOtp,
     logout,
     clearError,
   };

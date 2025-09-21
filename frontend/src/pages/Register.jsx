@@ -15,7 +15,7 @@ import Button from '../components/Button';
 
 const Register = () => {
   const navigate = useNavigate();
-  const { register, isLoading, error } = useAuth();
+  const { register, verifyOtp, isLoading, error } = useAuth();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -23,10 +23,11 @@ const Register = () => {
     password: '',
     confirmPassword: '',
   });
+  const [otp, setOtp] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formErrors, setFormErrors] = useState({});
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(1); // 1: Personal Details, 2: Password, 3: OTP Verification
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -98,6 +99,20 @@ const Register = () => {
 
     const result = await register(formData);
     if (result.success) {
+      // Move to OTP verification step
+      setStep(3);
+    }
+  };
+
+  const handleOtpSubmit = async (e) => {
+    e.preventDefault();
+    if (!otp || otp.length !== 6) {
+      setFormErrors({ otp: 'Please enter a valid 6-digit OTP' });
+      return;
+    }
+
+    const result = await verifyOtp(formData.email, otp);
+    if (result.success) {
       navigate('/');
     }
   };
@@ -166,19 +181,21 @@ const Register = () => {
             <div className="bg-white rounded-3xl shadow-2xl p-8 backdrop-blur-sm border border-white border-opacity-20">
               {/* Progress Indicator */}
               <div className="flex justify-center mb-8">
-                <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-2">
                   <div className={`w-3 h-3 rounded-full ${step >= 1 ? 'bg-primary-main' : 'bg-gray-300'}`}></div>
-                  <div className={`w-16 h-1 ${step >= 2 ? 'bg-primary-main' : 'bg-gray-300'} rounded`}></div>
+                  <div className={`w-12 h-1 ${step >= 2 ? 'bg-primary-main' : 'bg-gray-300'} rounded`}></div>
                   <div className={`w-3 h-3 rounded-full ${step >= 2 ? 'bg-primary-main' : 'bg-gray-300'}`}></div>
+                  <div className={`w-12 h-1 ${step >= 3 ? 'bg-primary-main' : 'bg-gray-300'} rounded`}></div>
+                  <div className={`w-3 h-3 rounded-full ${step >= 3 ? 'bg-primary-main' : 'bg-gray-300'}`}></div>
                 </div>
               </div>
 
               <div className="text-center mb-8">
                 <h2 className="text-3xl font-bold text-text-primary mb-2">
-                  {step === 1 ? 'Personal Details' : 'Create Password'}
+                  {step === 1 ? 'Personal Details' : step === 2 ? 'Create Password' : 'Verify Email'}
                 </h2>
                 <p className="text-text-secondary">
-                  {step === 1 ? 'Tell us about yourself' : 'Secure your account'}
+                  {step === 1 ? 'Tell us about yourself' : step === 2 ? 'Secure your account' : 'Enter the OTP sent to your email'}
                 </p>
               </div>
 
@@ -263,7 +280,7 @@ const Register = () => {
                     Continue
                   </Button>
                 </form>
-              ) : (
+              ) : step === 2 ? (
                 <form onSubmit={handleSubmit} className="space-y-6">
                   {/* Password Field */}
                   <div className="space-y-2">
@@ -376,7 +393,68 @@ const Register = () => {
                     </Button>
                   </div>
                 </form>
-              )}
+              ) : step === 3 ? (
+                <form onSubmit={handleOtpSubmit} className="space-y-6">
+                  <div className="text-center mb-6">
+                    <p className="text-text-secondary">
+                      We&apos;ve sent a 6-digit verification code to{' '}
+                      <span className="font-semibold text-text-primary">{formData.email}</span>
+                    </p>
+                  </div>
+
+                  {/* OTP Input */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-text-primary">Verification Code</label>
+                    <input
+                      type="text"
+                      value={otp}
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/\D/g, '').slice(0, 6);
+                        setOtp(value);
+                        if (formErrors.otp) {
+                          setFormErrors(prev => ({ ...prev, otp: '' }));
+                        }
+                      }}
+                      className={`w-full px-4 py-4 text-center text-2xl tracking-widest border-2 rounded-xl transition-all duration-200 bg-surface focus:bg-white ${
+                        formErrors.otp 
+                          ? 'border-error focus:border-error focus:ring-error' 
+                          : 'border-gray-200 focus:border-primary-main focus:ring-primary-main'
+                      } focus:ring-2 focus:ring-opacity-20 outline-none`}
+                      placeholder="000000"
+                      maxLength="6"
+                    />
+                    {formErrors.otp && (
+                      <p className="text-error text-sm">{formErrors.otp}</p>
+                    )}
+                  </div>
+
+                  <div className="flex space-x-4">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setStep(2)}
+                      className="flex-1 py-4"
+                    >
+                      Back
+                    </Button>
+                    <Button
+                      type="submit"
+                      disabled={isLoading}
+                      className="flex-1 py-4 text-lg font-semibold"
+                      size="large"
+                    >
+                      {isLoading ? (
+                        <div className="flex items-center justify-center space-x-2">
+                          <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                          <span>Verifying...</span>
+                        </div>
+                      ) : (
+                        'Verify & Complete'
+                      )}
+                    </Button>
+                  </div>
+                </form>
+              ) : null}
 
               {/* Sign In Link */}
               <div className="mt-8 text-center">
