@@ -51,9 +51,10 @@ const authReducer = (state, action) => {
     case AUTH_ACTIONS.REGISTER_SUCCESS:
       return {
         ...state,
+        user: action.payload.user || state.user, // Set user if provided, otherwise keep current
+        isAuthenticated: !!action.payload.user, // Set authenticated if user is provided
         isLoading: false,
         error: null,
-        // Don't set authenticated yet, waiting for OTP verification
       };
     
     case AUTH_ACTIONS.LOGIN_FAILURE:
@@ -133,6 +134,8 @@ export const AuthProvider = ({ children }) => {
       if (response.data.message === "Login successful" && response.data.token) {
         const { user, token } = response.data;
         
+        console.log('Login successful, storing token and user data:', { user, token });
+        
         // Store in localStorage
         localStorage.setItem('authToken', token);
         localStorage.setItem('userData', JSON.stringify(user));
@@ -171,17 +174,41 @@ export const AuthProvider = ({ children }) => {
       
       const response = await authAPI.register(registerData);
       
-      // Registration initiated successfully, OTP sent
-      dispatch({
-        type: AUTH_ACTIONS.REGISTER_SUCCESS,
-        payload: { message: response.data.message || 'OTP sent successfully' },
-      });
-      
-      return { 
-        success: true, 
-        message: response.data.message || 'OTP sent to your email',
-        email: userData.email 
-      };
+      // Check if backend returns user data and token directly (no OTP required)
+      if (response.data.token && response.data.user) {
+        // Direct registration success with token
+        const { user, token } = response.data;
+        
+        console.log('Registration successful, storing token and user data:', { user, token });
+        
+        // Store in localStorage
+        localStorage.setItem('authToken', token);
+        localStorage.setItem('userData', JSON.stringify(user));
+        
+        dispatch({
+          type: AUTH_ACTIONS.REGISTER_SUCCESS,
+          payload: { user },
+        });
+        
+        return { 
+          success: true, 
+          message: response.data.message || 'Registration successful',
+          directLogin: true // Flag to indicate user is logged in
+        };
+      } else {
+        // OTP flow - Registration initiated successfully, OTP sent
+        dispatch({
+          type: AUTH_ACTIONS.REGISTER_SUCCESS,
+          payload: { message: response.data.message || 'OTP sent successfully' },
+        });
+        
+        return { 
+          success: true, 
+          message: response.data.message || 'OTP sent to your email',
+          email: userData.email,
+          directLogin: false // Flag to indicate OTP verification needed
+        };
+      }
     } catch (error) {
       const errorMessage = error.response?.data?.message || error.message || 'Registration failed';
       dispatch({
@@ -199,7 +226,9 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await authAPI.verifyOtp({ email, otp });
       
-      if (response.data.success || response.data.message === 'Registration successful') {
+      // Check if verification was successful
+      if (response.data.message === 'Registration successful') {
+        // If backend provides user and token after OTP verification
         const user = response.data.user || {
           email: email,
           username: response.data.username,

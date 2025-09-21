@@ -5,6 +5,7 @@ import { AuthProvider } from './context/AuthContext';
 import { BookingProvider } from './context/BookingContext';
 import { useAuth } from './hooks/useAuth';
 import { Navbar, SubNavigation } from './components';
+import AuthGuard from './components/AuthGuard';
 
 // Pages
 import Home from './pages/Home';
@@ -75,8 +76,16 @@ const App = () => {
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/movies" element={<Movies />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/signup" element={<Register />} />
+              <Route path="/login" element={
+                <AuthGuard>
+                  <Login />
+                </AuthGuard>
+              } />
+              <Route path="/signup" element={
+                <AuthGuard>
+                  <Register />
+                </AuthGuard>
+              } />
               {/* 
               <Route path="/movies/:id" element={<MovieDetails />} />
               <Route path="/movies/:id/book" element={<MovieBooking />} />

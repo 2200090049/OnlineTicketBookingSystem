@@ -99,8 +99,13 @@ const Register = () => {
 
     const result = await register(formData);
     if (result.success) {
-      // Move to OTP verification step
-      setStep(3);
+      if (result.directLogin) {
+        // User is logged in directly, redirect to home
+        navigate('/');
+      } else {
+        // Move to OTP verification step
+        setStep(3);
+      }
     }
   };
 

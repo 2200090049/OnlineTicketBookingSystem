@@ -1,7 +1,12 @@
 package org.otbs.www.backend.services;
 
-import jakarta.validation.ConstraintViolation;
-import jakarta.validation.Validator;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Random;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
+
 import org.otbs.www.backend.models.Users;
 import org.otbs.www.backend.repositories.AuthRepo;
 import org.otbs.www.backend.util.JwtUtil;
@@ -11,12 +16,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Random;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validator;
 
 @Service
 public class AuthService {
@@ -42,10 +43,10 @@ public class AuthService {
         Set<ConstraintViolation<Users>> violations = validator.validate(user);
         if (!violations.isEmpty()) {
             Map<String, String> errors = violations.stream()
-                .collect(Collectors.toMap(
-                    violation -> violation.getPropertyPath().toString(),
-                    ConstraintViolation::getMessage
-                ));
+                    .collect(Collectors.toMap(
+                            violation -> violation.getPropertyPath().toString(),
+                            ConstraintViolation::getMessage
+                    ));
             return ResponseEntity.badRequest().body(Map.of("errors", errors));
         }
 
@@ -95,13 +96,22 @@ public class AuthService {
         // Hash password and save user
         pendingUser.setPassword(passwordEncoder.encode(pendingUser.getPassword()));
         pendingUser.setStatus("ACTIVE");
-        authRepo.save(pendingUser);
+        Users savedUser = authRepo.save(pendingUser);
+
+        // Generate JWT token
+        String token = jwtUtil.generateToken(savedUser);
 
         // Cleanup
         otpStore.remove(email);
         pendingRegistrations.remove(email);
 
-        return ResponseEntity.ok(Map.of("message", "Registration successful"));
+        // Return response with user + token
+        Map<String, Object> response = new HashMap<>();
+        response.put("message", "Registration successful");
+        response.put("user", savedUser);
+        response.put("token", token);
+
+        return ResponseEntity.ok(response);
     }
 
     public ResponseEntity<Object> login(String email, String password) {
