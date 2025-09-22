@@ -39,6 +39,26 @@ public class Users {
     private String deleted_at;
     private String updated_at;
 
+    public Integer getSpent() {
+        return spent;
+    }
+
+    public void setSpent(Integer spent) {
+        this.spent = spent;
+    }
+
+    public Integer getBookings() {
+        return bookings;
+    }
+
+    public void setBookings(Integer bookings) {
+        this.bookings = bookings;
+    }
+
+    private Integer spent = 0;
+    private Integer bookings = 0;
+
+
     // Getters and Setters
     public Integer getId() {
         return id;
