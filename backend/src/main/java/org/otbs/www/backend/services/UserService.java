@@ -133,6 +133,7 @@ public class UserService {
             userResponse.put("phone", savedUser.getPhone());
             userResponse.put("status", savedUser.getStatus());
             userResponse.put("updatedAt", savedUser.getUpdated_at());
+            userResponse.put("Avatar", savedUser.getAvatar());
 
             Map<String, Object> response = new HashMap<>();
             response.put("message", "Profile updated successfully");

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { userAPI } from '../services/userApi';
 import { 
   UserCircleIcon, 
   EnvelopeIcon, 
@@ -21,24 +22,70 @@ const Profile = () => {
   const { user, logout } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
   const [isEditing, setIsEditing] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [userBookings, setUserBookings] = useState([]);
   const [userStats, setUserStats] = useState({
     totalBookings: 0,
     totalSpent: 0,
     favoriteGenre: 'Action',
-    memberSince: '2024'
+    memberSince: new Date().getFullYear().toString()
   });
 
-  // Mock user profile data - in real app, this would come from backend
   const [profileData, setProfileData] = useState({
-    name: user?.name || user?.username || 'John Doe',
-    email: user?.email || 'john.doe@example.com',
-    phone: '+91 9876543210',
-    dateOfBirth: '1990-05-15',
-    address: '123 Main Street, Hyderabad, Telangana',
-    membershipLevel: 'Premium',
+    name: user?.name || user?.username || '',
+    email: user?.email || '',
+    phone: '',
+    dateOfBirth: '',
+    address: '',
+    membershipLevel: 'Standard',
     profileImage: null
   });
+
+  // Fetch user profile data from backend
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (!user) return;
+      
+      try {
+        setIsLoading(true);
+        const userData = await userAPI.getMe();
+        
+        // Update local storage with user data (except token)
+        const userToStore = { ...userData };
+        delete userToStore.token;
+        localStorage.setItem('userData', JSON.stringify(userToStore));
+        
+        // Update profile data
+        setProfileData({
+          name: userData.name || userData.username || '',
+          email: userData.email || '',
+          phone: userData.phone || '',
+          dateOfBirth: userData.dateOfBirth || '',
+          address: userData.address || '',
+          membershipLevel: userData.membershipLevel || 'Standard',
+          profileImage: userData.profileImage || null
+        });
+
+        // Update user stats if available
+        if (userData.stats) {
+          setUserStats({
+            totalBookings: userData.stats.totalBookings || 0,
+            totalSpent: userData.stats.totalSpent || 0,
+            favoriteGenre: userData.stats.favoriteGenre || 'Action',
+            memberSince: new Date(userData.createdAt).getFullYear().toString()
+          });
+        }
+      } catch (err) {
+        setError(err.message || 'Failed to fetch user profile');
+        console.error('Error fetching user profile:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchUserProfile();
+  }, [user]);
 
   // Mock booking history
   useEffect(() => {
@@ -86,10 +133,24 @@ const Profile = () => {
     });
   }, []);
 
-  const handleSaveProfile = () => {
-    // In real app, send update request to backend
-    setIsEditing(false);
-    console.log('Profile updated:', profileData);
+  const handleSaveProfile = async () => {
+    try {
+      setIsLoading(true);
+      await userAPI.updateMe(profileData);
+      
+      // Update local storage
+      const storedUser = JSON.parse(localStorage.getItem('userData') || '{}');
+      const updatedUser = { ...storedUser, ...profileData };
+      localStorage.setItem('userData', JSON.stringify(updatedUser));
+      
+      setIsEditing(false);
+      setError(null);
+    } catch (err) {
+      setError(err.message || 'Failed to update profile');
+      console.error('Error updating profile:', err);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleTabChange = (tab) => {
@@ -114,6 +175,13 @@ const Profile = () => {
   return (
     <div className="min-h-screen bg-surface py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Error Message */}
+        {error && (
+          <div className="mb-6 p-4 bg-error bg-opacity-10 border border-error border-opacity-20 rounded-lg">
+            <p className="text-error">{error}</p>
+          </div>
+        )}
+        
         {/* Show login prompt if user is not authenticated */}
         {!user ? (
           <div className="min-h-[60vh] flex items-center justify-center">
@@ -331,17 +399,29 @@ const Profile = () => {
                   <div className="mt-6 flex justify-end space-x-3">
                     {isEditing ? (
                       <>
-                        <Button variant="outline" onClick={() => setIsEditing(false)}>
+                        <Button 
+                          variant="outline" 
+                          onClick={() => setIsEditing(false)}
+                          disabled={isLoading}
+                        >
                           Cancel
                         </Button>
-                        <Button variant="primary" onClick={handleSaveProfile}>
-                          Save Changes
+                        <Button 
+                          variant="primary" 
+                          onClick={handleSaveProfile}
+                          disabled={isLoading}
+                        >
+                          {isLoading ? 'Saving...' : 'Save Changes'}
                         </Button>
                       </>
                     ) : (
-                      <Button variant="outline" onClick={() => setIsEditing(true)}>
+                      <Button 
+                        variant="outline" 
+                        onClick={() => setIsEditing(true)}
+                        disabled={isLoading}
+                      >
                         <PencilIcon className="w-4 h-4 mr-2" />
-                        Edit Profile
+                        {isLoading ? 'Loading...' : 'Edit Profile'}
                       </Button>
                     )}
                   </div>
@@ -477,10 +557,44 @@ const Profile = () => {
                     <div className="pt-6 border-t border-gray-200">
                       <h4 className="font-medium text-text-primary flex mb-3">Security</h4>
                       <div className="space-y-3">
-                        <Button variant="outline">
-                          Change Password
+                        <Button 
+                          variant="outline"
+                          onClick={async () => {
+                            const currentPassword = prompt('Enter your current password:');
+                            if (!currentPassword) return;
+                            
+                            const newPassword = prompt('Enter your new password:');
+                            if (!newPassword) return;
+                            
+                            const confirmPassword = prompt('Confirm your new password:');
+                            if (!confirmPassword) return;
+                            
+                            if (newPassword !== confirmPassword) {
+                              setError('New passwords do not match');
+                              return;
+                            }
+                            
+                            try {
+                              setIsLoading(true);
+                              await userAPI.changePassword(currentPassword, newPassword, confirmPassword);
+                              setError(null);
+                              alert('Password changed successfully');
+                            } catch (err) {
+                              setError(err.message || 'Failed to change password');
+                              console.error('Error changing password:', err);
+                            } finally {
+                              setIsLoading(false);
+                            }
+                          }}
+                          disabled={isLoading}
+                        >
+                          {isLoading ? 'Processing...' : 'Change Password'}
                         </Button>
-                        <Button variant="outline">
+                        <Button 
+                          variant="outline"
+                          disabled={true}
+                          title="Coming soon"
+                        >
                           Enable Two-Factor Authentication
                         </Button>
                       </div>
@@ -490,11 +604,32 @@ const Profile = () => {
                     <div className="pt-6 border-t border-gray-200">
                       <h4 className="font-medium text-text-primary mb-3">Account Actions</h4>
                       <div className="space-y-3">
-                        <Button variant="ghost" onClick={logout}>
+                        <Button 
+                          variant="ghost" 
+                          onClick={logout}
+                          disabled={isLoading}
+                        >
                           Sign Out
                         </Button>
-                        <Button variant="error">
-                          Delete Account
+                        <Button 
+                          variant="error"
+                          onClick={async () => {
+                            if (window.confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
+                              try {
+                                setIsLoading(true);
+                                await userAPI.deleteMe();
+                                logout(); // This will clear auth state and redirect to login
+                              } catch (err) {
+                                setError(err.message || 'Failed to delete account');
+                                console.error('Error deleting account:', err);
+                              } finally {
+                                setIsLoading(false);
+                              }
+                            }
+                          }}
+                          disabled={isLoading}
+                        >
+                          {isLoading ? 'Processing...' : 'Delete Account'}
                         </Button>
                       </div>
                     </div>
