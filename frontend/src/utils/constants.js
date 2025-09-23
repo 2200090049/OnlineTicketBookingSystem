@@ -110,15 +110,54 @@ export const SPORTS_CATEGORIES = [
   'Swimming',
 ];
 
-// Bus Types
+// Bus Types (matching backend enum)
 export const BUS_TYPES = {
+  AC_SLEEPER: 'AC_SLEEPER',
+  NON_AC_SLEEPER: 'NON_AC_SLEEPER',
+  AC_SEMI_SLEEPER: 'AC_SEMI_SLEEPER',
+  NON_AC_SEMI_SLEEPER: 'NON_AC_SEMI_SLEEPER',
+  AC_SEATER: 'AC_SEATER',
+  NON_AC_SEATER: 'NON_AC_SEATER',
+  VOLVO_AC: 'VOLVO_AC',
+  VOLVO_MULTI_AXLE: 'VOLVO_MULTI_AXLE',
+  ORDINARY: 'ORDINARY',
+};
+
+// Bus Type Display Names
+export const BUS_TYPE_DISPLAY = {
   AC_SLEEPER: 'AC Sleeper',
   NON_AC_SLEEPER: 'Non-AC Sleeper',
-  AC_SEMI_SLEEPER: 'AC Semi-Sleeper',
-  NON_AC_SEMI_SLEEPER: 'Non-AC Semi-Sleeper',
+  AC_SEMI_SLEEPER: 'AC Semi Sleeper',
+  NON_AC_SEMI_SLEEPER: 'Non-AC Semi Sleeper',
+  AC_SEATER: 'AC Seater',
+  NON_AC_SEATER: 'Non-AC Seater',
   VOLVO_AC: 'Volvo AC',
+  VOLVO_MULTI_AXLE: 'Volvo Multi Axle',
   ORDINARY: 'Ordinary',
-  LUXURY: 'Luxury',
+};
+
+// Bus Status
+export const BUS_STATUS = {
+  ACTIVE: 'ACTIVE',
+  INACTIVE: 'INACTIVE',
+  CANCELLED: 'CANCELLED',
+  MAINTENANCE: 'MAINTENANCE',
+};
+
+// Bus Booking Status (matching backend enum)
+export const BUS_BOOKING_STATUS = {
+  PENDING: 'PENDING',
+  CONFIRMED: 'CONFIRMED',
+  CANCELLED: 'CANCELLED',
+  REFUNDED: 'REFUNDED',
+  COMPLETED: 'COMPLETED',
+};
+
+// Gender Options
+export const GENDER_OPTIONS = {
+  MALE: 'MALE',
+  FEMALE: 'FEMALE',
+  OTHER: 'OTHER',
 };
 
 // Time Slots

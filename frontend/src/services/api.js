@@ -82,10 +82,48 @@ export const sportsAPI = {
 
 // Buses API endpoints
 export const busesAPI = {
+  // User endpoints
   search: (params) => api.get('/buses/search', { params }),
+  searchAdvanced: (params) => api.get('/buses/search/advanced', { params }),
   getById: (id) => api.get(`/buses/${id}`),
-  getSeats: (busId, date) => api.get(`/buses/${busId}/seats`, { params: { date } }),
+  getAvailable: () => api.get('/buses/available'),
   getRoutes: () => api.get('/buses/routes'),
+  getOperators: () => api.get('/buses/operators'),
+  getPopularRoutes: () => api.get('/buses/routes/popular'),
+  checkSeatAvailability: (busId, requestedSeats) => api.get(`/buses/${busId}/availability`, { params: { requestedSeats } }),
+  
+  // Admin endpoints
+  addBus: (busData) => api.post('/buses/admin', busData),
+  updateBus: (id, busData) => api.put(`/buses/admin/${id}`, busData),
+  deleteBus: (id) => api.delete(`/buses/admin/${id}`),
+  getAllBuses: () => api.get('/buses/admin'),
+  updateBusStatus: (id, status) => api.put(`/buses/admin/${id}/status`, { params: { status } }),
+  getBusStatistics: () => api.get('/buses/admin/statistics'),
+  
+  // Test endpoint
+  test: () => api.get('/buses/test'),
+};
+
+// Bus Bookings API endpoints
+export const busBookingsAPI = {
+  // User endpoints
+  bookBus: (bookingData) => api.post('/bus-bookings/book', bookingData),
+  getUserBookings: () => api.get('/bus-bookings/my-bookings'),
+  getUserActiveBookings: () => api.get('/bus-bookings/my-bookings/active'),
+  cancelBooking: (id) => api.put(`/bus-bookings/${id}/cancel`),
+  getBookingById: (id) => api.get(`/bus-bookings/${id}`),
+  getBookingByReference: (ref) => api.get(`/bus-bookings/reference/${ref}`),
+  
+  // Admin endpoints
+  getAllBookings: () => api.get('/bus-bookings/admin/all'),
+  getBookingsByBus: (busId) => api.get(`/bus-bookings/admin/bus/${busId}`),
+  getBookingStatistics: () => api.get('/bus-bookings/admin/statistics'),
+  updateBookingStatus: (id, status) => api.put(`/bus-bookings/admin/${id}/status`, { params: { status } }),
+  getPassengerManifest: (busId) => api.get(`/bus-bookings/admin/bus/${busId}/manifest`),
+  processRefund: (id) => api.post(`/bus-bookings/admin/${id}/refund`),
+  
+  // Test endpoint
+  test: () => api.get('/bus-bookings/test'),
 };
 
 // Train API endpoints
