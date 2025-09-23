@@ -261,7 +261,7 @@ public class EmailService {
             %s Team
             """, username, appName, appName);
     }
-}
+
     public void sendBookingConfirmation(String toEmail, String passengerName, String bookingReference, 
                                       String trainName, String trainNumber, String sourceStation, 
                                       String destinationStation, String departureTime, String arrivalTime, 
