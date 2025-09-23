@@ -26,7 +26,7 @@ public class EmailService {
             System.out.println("Subject: OTP Verification - " + appName);
             System.out.println("OTP: " + otp);
             System.out.println("=================");
-            
+
             // Try to send actual email
             try {
                 SimpleMailMessage message = new SimpleMailMessage();
@@ -34,7 +34,7 @@ public class EmailService {
                 message.setTo(toEmail);
                 message.setSubject("OTP Verification - " + appName);
                 message.setText(buildOTPEmailBody(otp));
-                
+
                 mailSender.send(message);
                 System.out.println("✅ OTP email sent successfully to: " + toEmail);
             } catch (Exception emailError) {
@@ -55,7 +55,7 @@ public class EmailService {
             System.out.println("Subject: Password Reset OTP - " + appName);
             System.out.println("OTP: " + otp);
             System.out.println("=================================");
-            
+
             // Try to send actual email
             try {
                 SimpleMailMessage message = new SimpleMailMessage();
@@ -63,7 +63,7 @@ public class EmailService {
                 message.setTo(toEmail);
                 message.setSubject("Password Reset OTP - " + appName);
                 message.setText(buildPasswordResetOTPEmailBody(otp));
-                
+
                 mailSender.send(message);
                 System.out.println("✅ Password reset OTP email sent successfully to: " + toEmail);
             } catch (Exception emailError) {
@@ -84,7 +84,7 @@ public class EmailService {
             System.out.println("Subject: Welcome to " + appName);
             System.out.println("Username: " + username);
             System.out.println("=====================");
-            
+
             // Try to send actual email
             try {
                 SimpleMailMessage message = new SimpleMailMessage();
@@ -92,7 +92,7 @@ public class EmailService {
                 message.setTo(toEmail);
                 message.setSubject("Welcome to " + appName);
                 message.setText(buildWelcomeEmailBody(username));
-                
+
                 mailSender.send(message);
                 System.out.println("✅ Welcome email sent successfully to: " + toEmail);
             } catch (Exception emailError) {
@@ -102,6 +102,64 @@ public class EmailService {
         } catch (Exception e) {
             System.err.println("Failed to send welcome email: " + e.getMessage());
             // Don't throw exception for welcome email as it's not critical
+        }
+    }
+
+    public void sendAccountDeletionEmail(String toEmail, String username) {
+        try {
+            // Log account deletion email to console for development
+            System.out.println("=== ACCOUNT DELETION EMAIL ===");
+            System.out.println("To: " + toEmail);
+            System.out.println("Subject: Account Deletion Confirmation - " + appName);
+            System.out.println("Username: " + username);
+            System.out.println("===============================");
+
+            // Try to send actual email
+            try {
+                SimpleMailMessage message = new SimpleMailMessage();
+                message.setFrom(fromEmail);
+                message.setTo(toEmail);
+                message.setSubject("Account Deletion Confirmation - " + appName);
+                message.setText(buildAccountDeletionEmailBody(username));
+
+                mailSender.send(message);
+                System.out.println("✅ Account deletion email sent successfully to: " + toEmail);
+            } catch (Exception emailError) {
+                System.err.println("❌ Failed to send account deletion email, but logged above: " + emailError.getMessage());
+                // Don't throw exception for deletion confirmation email as it's not critical
+            }
+        } catch (Exception e) {
+            System.err.println("Failed to send account deletion email: " + e.getMessage());
+            // Don't throw exception for deletion confirmation email as it's not critical
+        }
+    }
+
+    public void sendPasswordChangeConfirmation(String toEmail, String username) {
+        try {
+            // Log password change confirmation to console for development
+            System.out.println("=== PASSWORD CHANGE CONFIRMATION EMAIL ===");
+            System.out.println("To: " + toEmail);
+            System.out.println("Subject: Password Changed Successfully - " + appName);
+            System.out.println("Username: " + username);
+            System.out.println("===========================================");
+
+            // Try to send actual email
+            try {
+                SimpleMailMessage message = new SimpleMailMessage();
+                message.setFrom(fromEmail);
+                message.setTo(toEmail);
+                message.setSubject("Password Changed Successfully - " + appName);
+                message.setText(buildPasswordChangeConfirmationEmailBody(username));
+
+                mailSender.send(message);
+                System.out.println("✅ Password change confirmation email sent successfully to: " + toEmail);
+            } catch (Exception emailError) {
+                System.err.println("❌ Failed to send password change confirmation email, but logged above: " + emailError.getMessage());
+                // Don't throw exception for password change confirmation email as it's not critical
+            }
+        } catch (Exception e) {
+            System.err.println("Failed to send password change confirmation email: " + e.getMessage());
+            // Don't throw exception for password change confirmation email as it's not critical
         }
     }
 
@@ -161,5 +219,46 @@ public class EmailService {
             Best regards,
             %s Team
             """, username, appName, appName, appName);
+    }
+
+    private String buildAccountDeletionEmailBody(String username) {
+        return String.format("""
+            Dear %s,
+            
+            We're sorry to see you go! This email confirms that your %s account has been successfully deleted.
+            
+            Your account and associated data have been removed from our system.
+            
+            If you didn't request this deletion or believe this was done in error, please contact our support team immediately at support@otbs.com.
+            
+            Thank you for being part of our community. We hope to serve you again in the future!
+            
+            Best regards,
+            %s Team
+            """, username, appName, appName);
+    }
+
+    private String buildPasswordChangeConfirmationEmailBody(String username) {
+        return String.format("""
+            Dear %s,
+            
+            This email confirms that your password for your %s account has been successfully changed.
+            
+            If you didn't make this change, please:
+            • Contact our support team immediately
+            • Consider changing your password again
+            • Review your account security settings
+            
+            For your security, please remember to:
+            • Use a strong, unique password
+            • Keep your login credentials secure
+            • Log out from shared devices
+            • Enable two-factor authentication if available
+            
+            If you have any concerns about your account security, please don't hesitate to contact us.
+            
+            Best regards,
+            %s Team
+            """, username, appName, appName);
     }
 }

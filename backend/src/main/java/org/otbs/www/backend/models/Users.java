@@ -46,6 +46,26 @@ public class Users {
     private Vendor_Type vendorType = Vendor_Type.Defualt;
     private String deleted_at;
     private String updated_at;
+
+    public String getCreated_at() {
+        return created_at;
+    }
+
+    public void setCreated_at(String created_at) {
+        this.created_at = created_at;
+    }
+
+    public String getAvatar() {
+        return avatar;
+    }
+
+    public void setAvatar(String avatar) {
+        this.avatar = avatar;
+    }
+
+    private String created_at;
+
+    private String avatar = "user1.gif";
     
     public boolean isVendor() {
         return isVendor;
