@@ -7,7 +7,7 @@ export const userAPI = {
     return response.data;
   },
 
-  // Update user's profile
+  // Update user's profile (including avatar)
   updateMe: async (userData) => {
     const response = await api.put('/user/update-me', userData);
     return response.data;

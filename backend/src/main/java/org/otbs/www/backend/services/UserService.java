@@ -47,6 +47,22 @@ public class UserService {
         return userRepo.findByEmail(email);
     }
 
+    // Helper method to create user response without sensitive information
+    private Map<String, Object> createUserResponse(Users user) {
+        Map<String, Object> userResponse = new HashMap<>();
+        userResponse.put("id", user.getId());
+        userResponse.put("username", user.getUsername());
+        userResponse.put("email", user.getEmail());
+        userResponse.put("phone", user.getPhone());
+        userResponse.put("status", user.getStatus());
+        userResponse.put("avatar", user.getAvatar());
+        userResponse.put("isVendor", user.isVendor());
+        userResponse.put("vendorType", user.getVendorType() != null ? user.getVendorType().toString() : null);
+        userResponse.put("createdAt", user.getCreated_at());
+        userResponse.put("updatedAt", user.getUpdated_at());
+        return userResponse;
+    }
+
     public ResponseEntity<Object> getMe() {
         try {
             Users currentUser = getCurrentUser();
@@ -55,19 +71,9 @@ public class UserService {
                         .body(Map.of("message", "User not authenticated"));
             }
 
-            // Create response without sensitive information
-            Map<String, Object> userResponse = new HashMap<>();
-            userResponse.put("id", currentUser.getId());
-            userResponse.put("username", currentUser.getUsername());
-            userResponse.put("email", currentUser.getEmail());
-            userResponse.put("phone", currentUser.getPhone());
-            userResponse.put("status", currentUser.getStatus());
-            userResponse.put("createdAt", currentUser.getCreated_at());
-            userResponse.put("updatedAt", currentUser.getUpdated_at());
-
             Map<String, Object> response = new HashMap<>();
             response.put("message", "User profile retrieved successfully");
-            response.put("user", userResponse);
+            response.put("user", createUserResponse(currentUser));
 
             return ResponseEntity.ok(response);
         } catch (Exception e) {
@@ -125,24 +131,49 @@ public class UserService {
             // Save updated user
             Users savedUser = userRepo.save(currentUser);
 
-            // Create response without sensitive information
-            Map<String, Object> userResponse = new HashMap<>();
-            userResponse.put("id", savedUser.getId());
-            userResponse.put("username", savedUser.getUsername());
-            userResponse.put("email", savedUser.getEmail());
-            userResponse.put("phone", savedUser.getPhone());
-            userResponse.put("status", savedUser.getStatus());
-            userResponse.put("updatedAt", savedUser.getUpdated_at());
-            userResponse.put("Avatar", savedUser.getAvatar());
-
             Map<String, Object> response = new HashMap<>();
             response.put("message", "Profile updated successfully");
-            response.put("user", userResponse);
+            response.put("user", createUserResponse(savedUser));
 
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("message", "Failed to update profile: " + e.getMessage()));
+        }
+    }
+
+    public ResponseEntity<Object> updateAvatar(String avatarUrl) {
+        try {
+            Users currentUser = getCurrentUser();
+            if (currentUser == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of("message", "User not authenticated"));
+            }
+
+            // Check if account is active
+            if (!"ACTIVE".equals(currentUser.getStatus())) {
+                return ResponseEntity.badRequest()
+                        .body(Map.of("message", "Account is not active"));
+            }
+
+            // Validate avatar URL (basic validation)
+            if (avatarUrl.length() > 500) { // Assuming max URL length
+                return ResponseEntity.badRequest()
+                        .body(Map.of("message", "Avatar URL is too long"));
+            }
+
+            // Update avatar
+            currentUser.setAvatar(avatarUrl);
+            Users savedUser = userRepo.save(currentUser);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("message", "Avatar updated successfully");
+            response.put("user", createUserResponse(savedUser));
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", "Failed to update avatar: " + e.getMessage()));
         }
     }
 
@@ -166,7 +197,7 @@ public class UserService {
             }
 
             // Instead of hard delete, mark account as DELETED
-            currentUser.setStatus("InACTIVE");
+            currentUser.setStatus("INACTIVE");
             userRepo.save(currentUser);
 
             // Send account deletion confirmation email

@@ -17,8 +17,22 @@ import {
 } from '@heroicons/react/24/outline';
 import Card from '../components/Card';
 import Button from '../components/Button';
+import user1 from '../assets/user1.gif';
+import user2 from '../assets/user2.gif';
+import user3 from '../assets/user3.gif';
+import user4 from '../assets/user4.gif';
+import user5 from '../assets/user5.gif';
 
 const Profile = () => {
+  const gifOptions = [
+    user1,
+    user2,
+    user3,
+    user4,
+    user5,
+  ];
+  const [showAvatarModal, setShowAvatarModal] = useState(false);
+
   const { user, logout } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
   const [isEditing, setIsEditing] = useState(false);
@@ -41,6 +55,13 @@ const Profile = () => {
     membershipLevel: 'Standard',
     profileImage: null
   });
+
+  // Avatar GIF selection handler
+  const handleAvatarSelect = async (gifName) => {
+    setProfileData((prev) => ({ ...prev, profileImage: gifName }));
+    setShowAvatarModal(false);
+    await handleSaveProfile({ ...profileData, profileImage: gifName });
+  };
 
   // Fetch user profile data from backend
   useEffect(() => {
@@ -242,17 +263,39 @@ const Profile = () => {
                 <div className="relative inline-block mb-4">
                   {profileData.profileImage ? (
                     <img 
-                      src={profileData.profileImage} 
+                      src={profileData.profileImage}
                       alt="Profile" 
-                      className="w-20 h-20 rounded-full object-cover"
+                      className="w-32 h-32 rounded-full object-cover"
                     />
                   ) : (
-                    <UserCircleIcon className="w-20 h-20 text-primary-main" />
+                    <UserCircleIcon className="w-32 h-32 text-primary-main" />
                   )}
-                  <button className="absolute bottom-0 right-0 p-1 bg-primary-main text-white rounded-full hover:bg-primary-dark transition-colors">
+                  <button className="absolute bottom-0 right-0 p-1 bg-primary-main text-white rounded-full hover:bg-primary-dark transition-colors" onClick={() => setShowAvatarModal(true)}>
                     <PencilIcon className="w-4 h-4" />
                   </button>
                 </div>
+      {/* Avatar GIF Selection Modal */}
+      {showAvatarModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+          <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-md">
+            <h3 className="text-lg font-semibold mb-4 text-text-primary">Select an Avatar GIF</h3>
+            <div className="grid grid-cols-3 gap-4 mb-6">
+              {gifOptions.map((gif) => (
+                <button
+                  key={gif}
+                  className={`border-2 rounded-xl p-2 hover:border-primary-main transition-all ${profileData.profileImage === gif ? 'border-primary-main' : 'border-gray-200'}`}
+                  onClick={() => handleAvatarSelect(gif)}
+                >
+                  <img src={gif} alt="Avatar option" className="w-24 h-24 object-cover mx-auto" />
+                </button>
+              ))}
+            </div>
+            <div className="flex justify-end">
+              <Button variant="outline" onClick={() => setShowAvatarModal(false)}>Cancel</Button>
+            </div>
+          </div>
+        </div>
+      )}
                 <h3 className="font-semibold text-text-primary">{profileData.name}</h3>
                 <p className="text-sm text-text-secondary">{profileData.membershipLevel} Member</p>
                 <div className="flex items-center justify-center mt-2">
