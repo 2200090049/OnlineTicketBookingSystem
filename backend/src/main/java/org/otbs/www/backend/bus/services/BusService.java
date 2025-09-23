@@ -327,8 +327,15 @@ public class BusService {
         Map<String, Object> response = new HashMap<>();
         
         try {
-            List<Bus> buses = busRepository.findBusesDepartingToday(Bus.BusStatus.ACTIVE);
-            buses.addAll(busRepository.findBusesDepartingTomorrow(Bus.BusStatus.ACTIVE));
+            // Get today's buses
+            LocalDateTime todayStart = LocalDateTime.now().toLocalDate().atStartOfDay();
+            LocalDateTime todayEnd = todayStart.plusDays(1);
+            List<Bus> buses = busRepository.findBusesDepartingToday(todayStart, todayEnd, Bus.BusStatus.ACTIVE);
+            
+            // Add tomorrow's buses
+            LocalDateTime tomorrowStart = LocalDateTime.now().plusDays(1).toLocalDate().atStartOfDay();
+            LocalDateTime tomorrowEnd = tomorrowStart.plusDays(1);
+            buses.addAll(busRepository.findBusesDepartingTomorrow(tomorrowStart, tomorrowEnd, Bus.BusStatus.ACTIVE));
             
             response.put("message", "Available buses retrieved successfully");
             response.put("buses", buses);

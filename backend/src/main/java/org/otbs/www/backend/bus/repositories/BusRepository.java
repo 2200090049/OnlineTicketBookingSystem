@@ -117,14 +117,20 @@ public interface BusRepository extends JpaRepository<Bus, Integer> {
     List<Object[]> findPopularRoutes(@Param("status") Bus.BusStatus status);
     
     // Find buses departing today
-    @Query("SELECT b FROM Bus b WHERE DATE(b.departureTime) = CURRENT_DATE " +
+    @Query("SELECT b FROM Bus b WHERE b.departureTime >= :todayStart AND b.departureTime < :todayEnd " +
            "AND b.status = :status ORDER BY b.departureTime ASC")
-    List<Bus> findBusesDepartingToday(@Param("status") Bus.BusStatus status);
+    List<Bus> findBusesDepartingToday(
+        @Param("todayStart") LocalDateTime todayStart,
+        @Param("todayEnd") LocalDateTime todayEnd,
+        @Param("status") Bus.BusStatus status);
     
     // Find buses departing tomorrow
-    @Query("SELECT b FROM Bus b WHERE DATE(b.departureTime) = DATE(CURRENT_DATE + 1) " +
+    @Query("SELECT b FROM Bus b WHERE b.departureTime >= :tomorrowStart AND b.departureTime < :tomorrowEnd " +
            "AND b.status = :status ORDER BY b.departureTime ASC")
-    List<Bus> findBusesDepartingTomorrow(@Param("status") Bus.BusStatus status);
+    List<Bus> findBusesDepartingTomorrow(
+        @Param("tomorrowStart") LocalDateTime tomorrowStart,
+        @Param("tomorrowEnd") LocalDateTime tomorrowEnd,
+        @Param("status") Bus.BusStatus status);
     
     // Find buses by duration range (calculated field)
     @Query("SELECT b FROM Bus b WHERE " +
