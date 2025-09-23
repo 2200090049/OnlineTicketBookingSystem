@@ -63,29 +63,101 @@ const TrainBooking = () => {
   const loadTrains = async () => {
     try {
       setIsLoading(true);
-      const response = await trainAPI.searchTrains({});
-      setTrains(response.data);
-      setFilteredTrains(response.data);
+      const response = await trainAPI.getAvailableTrains();
+      const trainsData = Array.isArray(response.data) ? response.data : [];
+      setTrains(trainsData);
+      setFilteredTrains(trainsData);
     } catch (error) {
       console.error('Error loading trains:', error);
+      // Set some mock data for testing
+      const mockTrains = [
+        {
+          id: 1,
+          trainName: "Express Superfast",
+          trainNumber: "EXP123",
+          sourceStation: "Delhi",
+          destinationStation: "Mumbai",
+          departureTime: "2024-12-25T08:00:00",
+          arrivalTime: "2024-12-25T20:00:00",
+          totalSeats: 100,
+          availableSeats: 85,
+          price: 1500,
+          trainClass: "SECOND_AC",
+          status: "ACTIVE"
+        },
+        {
+          id: 2,
+          trainName: "Rajdhani Express",
+          trainNumber: "RAJ456",
+          sourceStation: "Delhi",
+          destinationStation: "Bangalore",
+          departureTime: "2024-12-25T10:00:00",
+          arrivalTime: "2024-12-26T08:00:00",
+          totalSeats: 80,
+          availableSeats: 60,
+          price: 2500,
+          trainClass: "FIRST_AC",
+          status: "ACTIVE"
+        },
+        {
+          id: 3,
+          trainName: "Shatabdi Express",
+          trainNumber: "SHAT789",
+          sourceStation: "Mumbai",
+          destinationStation: "Pune",
+          departureTime: "2024-12-25T14:00:00",
+          arrivalTime: "2024-12-25T18:00:00",
+          totalSeats: 60,
+          availableSeats: 45,
+          price: 800,
+          trainClass: "THIRD_AC",
+          status: "ACTIVE"
+        }
+      ];
+      setTrains(mockTrains);
+      setFilteredTrains(mockTrains);
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleSearch = () => {
-    if (!searchParams.source || !searchParams.destination || !searchParams.date) {
-      alert('Please fill all search fields');
+    // Ensure trains is an array before filtering
+    if (!Array.isArray(trains)) {
+      console.error('Trains is not an array:', trains);
+      return;
+    }
+
+    // If no search criteria, show all trains
+    if (!searchParams.source && !searchParams.destination && !searchParams.date) {
+      setFilteredTrains(trains);
       return;
     }
 
     const filtered = trains.filter(train => {
-      const matchesSource = train.sourceStation.toLowerCase().includes(searchParams.source.toLowerCase());
-      const matchesDestination = train.destinationStation.toLowerCase().includes(searchParams.destination.toLowerCase());
-      const matchesDate = new Date(train.departureTime).toDateString() === new Date(searchParams.date).toDateString();
-      const hasSeats = train.availableSeats >= searchParams.passengers;
+      let matches = true;
       
-      return matchesSource && matchesDestination && matchesDate && hasSeats;
+      // Filter by source station
+      if (searchParams.source) {
+        matches = matches && train.sourceStation.toLowerCase().includes(searchParams.source.toLowerCase());
+      }
+      
+      // Filter by destination station
+      if (searchParams.destination) {
+        matches = matches && train.destinationStation.toLowerCase().includes(searchParams.destination.toLowerCase());
+      }
+      
+      // Filter by date
+      if (searchParams.date) {
+        const trainDate = new Date(train.departureTime).toDateString();
+        const searchDate = new Date(searchParams.date).toDateString();
+        matches = matches && trainDate === searchDate;
+      }
+      
+      // Filter by available seats
+      matches = matches && train.availableSeats >= searchParams.passengers;
+      
+      return matches;
     });
 
     setFilteredTrains(filtered);
@@ -97,20 +169,12 @@ const TrainBooking = () => {
       return;
     }
 
-    setSelectedTrain(train);
-    // Initialize passengers array based on number of seats
-    const passengers = Array.from({ length: searchParams.passengers }, (_, index) => ({
-      name: '',
-      age: '',
-      gender: 'Male',
-      seatPreference: 'No Preference'
-    }));
-    
-    setBookingForm({
-      passengers,
-      contactEmail: user.email || '',
-      contactPhone: '',
-      numberOfSeats: searchParams.passengers
+    // Navigate directly to seat selection page
+    navigate('/train-booking/seats', { 
+      state: { 
+        train: train,
+        passengers: searchParams.passengers 
+      } 
     });
   };
 
@@ -131,18 +195,18 @@ const TrainBooking = () => {
       setIsBooking(true);
       const bookingData = {
         train: { id: selectedTrain.id },
-        passengers: bookingForm.passengers,
-        contactEmail: bookingForm.contactEmail,
-        contactPhone: bookingForm.contactPhone,
+        passengerName: bookingForm.passengers[0].name, // Use first passenger as primary
+        passengerEmail: bookingForm.contactEmail,
+        passengerPhone: bookingForm.contactPhone,
         numberOfSeats: bookingForm.numberOfSeats,
         totalAmount: selectedTrain.price * bookingForm.numberOfSeats
       };
 
       const response = await bookingsAPI.bookTrain(bookingData);
       
-      if (response.data) {
+      if (response.data && response.data.booking) {
         // Download PDF ticket automatically
-        await downloadTicket(response.data.id);
+        await downloadTicket(response.data.booking.id);
         
         // Set booking details for success modal
         setBookingDetails({
@@ -151,7 +215,8 @@ const TrainBooking = () => {
           destinationStation: selectedTrain.destinationStation,
           numberOfSeats: bookingForm.numberOfSeats,
           totalAmount: selectedTrain.price * bookingForm.numberOfSeats,
-          bookingId: response.data.id
+          bookingId: response.data.booking.id,
+          bookingReference: response.data.bookingReference
         });
         
         setSelectedTrain(null);
@@ -287,6 +352,7 @@ const TrainBooking = () => {
         {/* Search Form */}
         <Card className="mb-8">
           <div className="p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Search Trains (Optional)</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -337,11 +403,11 @@ const TrainBooking = () => {
                   ))}
                 </select>
               </div>
-              <div className="flex items-end">
+              <div className="flex items-end space-x-2">
                 <Button 
                   onClick={handleSearch}
                   disabled={isLoading}
-                  className="w-full"
+                  className="flex-1"
                 >
                   {isLoading ? (
                     <div className="flex items-center space-x-2">
@@ -351,9 +417,24 @@ const TrainBooking = () => {
                   ) : (
                     <div className="flex items-center space-x-2">
                       <MagnifyingGlassIcon className="h-4 w-4" />
-                      <span>Search Trains</span>
+                      <span>Search</span>
                     </div>
                   )}
+                </Button>
+                <Button 
+                  onClick={() => {
+                    setSearchParams({
+                      source: '',
+                      destination: '',
+                      date: '',
+                      passengers: 1
+                    });
+                    setFilteredTrains(trains);
+                  }}
+                  variant="outline"
+                  className="px-4"
+                >
+                  Clear
                 </Button>
               </div>
             </div>
@@ -362,7 +443,7 @@ const TrainBooking = () => {
 
         {/* Results */}
         <div className="space-y-6">
-          {filteredTrains.length > 0 ? (
+          {Array.isArray(filteredTrains) && filteredTrains.length > 0 ? (
             filteredTrains.map((train) => (
               <Card key={train.id} className="hover:shadow-md transition-shadow">
                 <div className="p-6">

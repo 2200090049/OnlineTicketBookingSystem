@@ -301,4 +301,19 @@ public class BookingController {
             return ResponseEntity.status(401).body(Map.of("message", "Invalid or expired token"));
         }
     }
+
+    /**
+     * Download PDF ticket for booking
+     * GET /api/bookings/{bookingId}/download
+     */
+    @GetMapping("/{bookingId}/download")
+    public ResponseEntity<byte[]> downloadTicket(@PathVariable Integer bookingId,
+                                               @RequestHeader("Authorization") String token) {
+        try {
+            Users user = jwtUtil.getUserFromToken(token);
+            return bookingService.generateTicketPdf(bookingId, user);
+        } catch (Exception e) {
+            return ResponseEntity.status(401).build();
+        }
+    }
 }

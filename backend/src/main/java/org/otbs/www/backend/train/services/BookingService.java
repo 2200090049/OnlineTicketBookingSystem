@@ -10,6 +10,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.otbs.www.backend.models.Users;
+import org.otbs.www.backend.services.EmailService;
+import org.otbs.www.backend.services.PdfService;
 import org.otbs.www.backend.train.models.Booking;
 import org.otbs.www.backend.train.models.Train;
 import org.otbs.www.backend.train.repositories.BookingRepository;
@@ -36,17 +38,32 @@ public class BookingService {
     @Autowired
     private Validator validator;
 
+    @Autowired
+    private PdfService pdfService;
+
+    @Autowired
+    private EmailService emailService;
+
     /**
      * Book train tickets
      */
     public ResponseEntity<Object> bookTrainTickets(Booking bookingRequest, Users user) {
+        System.out.println("=== BOOKING REQUEST DEBUG ===");
+        System.out.println("Booking request: " + bookingRequest);
+        System.out.println("Train ID: " + (bookingRequest.getTrain() != null ? bookingRequest.getTrain().getId() : "NULL"));
+        System.out.println("User: " + user);
+        
         // Check if train exists and is available
         Optional<Train> optionalTrain = trainRepository.findById(bookingRequest.getTrain().getId());
+        System.out.println("Train found: " + optionalTrain.isPresent());
+        
         if (optionalTrain.isEmpty()) {
+            System.out.println("Train not found in database with ID: " + bookingRequest.getTrain().getId());
             return ResponseEntity.notFound().build();
         }
 
         Train train = optionalTrain.get();
+        System.out.println("Train details: " + train.getTrainName() + " - " + train.getTrainNumber());
         
         // Validate train availability
         if (train.getStatus() != Train.TrainStatus.ACTIVE) {
@@ -92,10 +109,41 @@ public class BookingService {
         train.setUpdatedAt(LocalDateTime.now());
         trainRepository.save(train);
 
+        // Send booking confirmation email
+        try {
+            emailService.sendBookingConfirmation(
+                savedBooking.getPassengerEmail(),
+                savedBooking.getPassengerName(),
+                savedBooking.getBookingReference(),
+                train.getTrainName(),
+                train.getTrainNumber(),
+                train.getSourceStation(),
+                train.getDestinationStation(),
+                train.getDepartureTime().format(java.time.format.DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm")),
+                train.getArrivalTime().format(java.time.format.DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm")),
+                savedBooking.getNumberOfSeats(),
+                "₹" + savedBooking.getTotalAmount()
+            );
+        } catch (Exception e) {
+            // Log error but don't fail the booking
+            System.err.println("Failed to send booking confirmation email: " + e.getMessage());
+        }
+
         Map<String, Object> response = new HashMap<>();
         response.put("message", "Tickets booked successfully");
-        response.put("booking", savedBooking);
         response.put("bookingReference", savedBooking.getBookingReference());
+        
+        // Create a simplified booking object to avoid JSON serialization issues
+        Map<String, Object> bookingInfo = new HashMap<>();
+        bookingInfo.put("id", savedBooking.getId());
+        bookingInfo.put("passengerName", savedBooking.getPassengerName());
+        bookingInfo.put("passengerEmail", savedBooking.getPassengerEmail());
+        bookingInfo.put("numberOfSeats", savedBooking.getNumberOfSeats());
+        bookingInfo.put("totalAmount", savedBooking.getTotalAmount());
+        bookingInfo.put("status", savedBooking.getStatus().toString());
+        bookingInfo.put("bookingDate", savedBooking.getBookingDate());
+        
+        response.put("booking", bookingInfo);
         
         return ResponseEntity.ok(response);
     }
@@ -104,11 +152,46 @@ public class BookingService {
      * Get user's bookings
      */
     public ResponseEntity<Object> getUserBookings(Users user) {
-        List<Booking> bookings = bookingRepository.findByUserOrderByBookingDateDesc(user);
+        List<Booking> bookings = bookingRepository.findByUserWithTrainOrderByBookingDateDesc(user);
+        
+        // Convert to DTOs to avoid lazy loading issues
+        List<Map<String, Object>> bookingDTOs = bookings.stream().map(booking -> {
+            Map<String, Object> bookingDTO = new HashMap<>();
+            bookingDTO.put("id", booking.getId());
+            bookingDTO.put("passengerName", booking.getPassengerName());
+            bookingDTO.put("passengerEmail", booking.getPassengerEmail());
+            bookingDTO.put("passengerPhone", booking.getPassengerPhone());
+            bookingDTO.put("numberOfSeats", booking.getNumberOfSeats());
+            bookingDTO.put("totalAmount", booking.getTotalAmount());
+            bookingDTO.put("status", booking.getStatus().toString());
+            bookingDTO.put("bookingReference", booking.getBookingReference());
+            bookingDTO.put("bookingDate", booking.getBookingDate());
+            bookingDTO.put("updatedAt", booking.getUpdatedAt());
+            
+            // Create train DTO
+            if (booking.getTrain() != null) {
+                Map<String, Object> trainDTO = new HashMap<>();
+                trainDTO.put("id", booking.getTrain().getId());
+                trainDTO.put("trainName", booking.getTrain().getTrainName());
+                trainDTO.put("trainNumber", booking.getTrain().getTrainNumber());
+                trainDTO.put("sourceStation", booking.getTrain().getSourceStation());
+                trainDTO.put("destinationStation", booking.getTrain().getDestinationStation());
+                trainDTO.put("departureTime", booking.getTrain().getDepartureTime());
+                trainDTO.put("arrivalTime", booking.getTrain().getArrivalTime());
+                trainDTO.put("totalSeats", booking.getTrain().getTotalSeats());
+                trainDTO.put("availableSeats", booking.getTrain().getAvailableSeats());
+                trainDTO.put("price", booking.getTrain().getPrice());
+                trainDTO.put("trainClass", booking.getTrain().getTrainClass().toString());
+                trainDTO.put("status", booking.getTrain().getStatus().toString());
+                bookingDTO.put("train", trainDTO);
+            }
+            
+            return bookingDTO;
+        }).collect(Collectors.toList());
         
         Map<String, Object> response = new HashMap<>();
-        response.put("message", "Bookings found: " + bookings.size());
-        response.put("bookings", bookings);
+        response.put("message", "Bookings found: " + bookingDTOs.size());
+        response.put("bookings", bookingDTOs);
         return ResponseEntity.ok(response);
     }
 
@@ -342,5 +425,35 @@ public class BookingService {
         response.put("bookings", revenueBookings);
         
         return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Generate PDF ticket for booking
+     */
+    public ResponseEntity<byte[]> generateTicketPdf(Integer bookingId, Users user) {
+        Optional<Booking> optionalBooking = bookingRepository.findById(bookingId);
+        if (optionalBooking.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        Booking booking = optionalBooking.get();
+
+        // Check if user owns this booking
+        if (!booking.getUser().getId().equals(user.getId())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        try {
+            byte[] pdfBytes = pdfService.generateTrainTicket(booking);
+            
+            return ResponseEntity.ok()
+                .header("Content-Type", "application/pdf")
+                .header("Content-Disposition", "attachment; filename=train-ticket-" + booking.getBookingReference() + ".pdf")
+                .body(pdfBytes);
+        } catch (Exception e) {
+            System.err.println("Failed to generate PDF ticket: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 }

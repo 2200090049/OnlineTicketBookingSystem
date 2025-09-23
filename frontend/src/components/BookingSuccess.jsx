@@ -16,9 +16,27 @@ const BookingSuccess = ({ bookingDetails, onClose }) => {
     return () => clearTimeout(timer);
   }, [onClose]);
 
-  const handleDownloadTicket = () => {
-    // This would trigger the download
-    console.log('Downloading ticket...');
+  const handleDownloadTicket = async () => {
+    if (bookingDetails && bookingDetails.bookingId) {
+      try {
+        const { bookingsAPI } = await import('../services/api');
+        const response = await bookingsAPI.downloadTicket(bookingDetails.bookingId);
+        
+        // Create blob and download
+        const blob = new Blob([response.data], { type: 'application/pdf' });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `train-ticket-${bookingDetails.bookingId}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      } catch (error) {
+        console.error('Error downloading ticket:', error);
+        alert('Failed to download ticket. Please try again.');
+      }
+    }
   };
 
   const handleGoHome = () => {
@@ -54,6 +72,9 @@ const BookingSuccess = ({ bookingDetails, onClose }) => {
                 <p><span className="font-medium">Passengers:</span> {bookingDetails.numberOfSeats}</p>
                 <p><span className="font-medium">Total Amount:</span> ₹{bookingDetails.totalAmount}</p>
                 <p><span className="font-medium">Booking ID:</span> {bookingDetails.bookingId}</p>
+                {bookingDetails.bookingReference && (
+                  <p><span className="font-medium">Reference:</span> {bookingDetails.bookingReference}</p>
+                )}
               </div>
             </div>
           )}
