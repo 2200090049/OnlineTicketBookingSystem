@@ -1,11 +1,11 @@
-package org.otbs.www.backend.controllers;
+package org.otbs.www.backend.train.controllers;
 
 import java.time.LocalDateTime;
 import java.util.Map;
 
-import org.otbs.www.backend.models.Booking;
 import org.otbs.www.backend.models.Users;
-import org.otbs.www.backend.services.BookingService;
+import org.otbs.www.backend.train.models.Booking;
+import org.otbs.www.backend.train.services.BookingService;
 import org.otbs.www.backend.util.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;

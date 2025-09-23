@@ -1,12 +1,12 @@
-package org.otbs.www.backend.repositories;
+package org.otbs.www.backend.train.repositories;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
-import org.otbs.www.backend.models.Booking;
-import org.otbs.www.backend.models.Train;
 import org.otbs.www.backend.models.Users;
+import org.otbs.www.backend.train.models.Booking;
+import org.otbs.www.backend.train.models.Train;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -128,5 +128,3 @@ public interface BookingRepository extends JpaRepository<Booking, Integer> {
     @Query("SELECT b FROM Booking b WHERE LOWER(b.passengerName) LIKE LOWER(CONCAT('%', :name, '%')) ORDER BY b.bookingDate DESC")
     List<Booking> findByPassengerNameContainingIgnoreCase(@Param("name") String name);
 }
-
-

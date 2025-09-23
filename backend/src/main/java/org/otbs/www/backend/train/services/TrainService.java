@@ -1,4 +1,4 @@
-package org.otbs.www.backend.services;
+package org.otbs.www.backend.train.services;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -9,8 +9,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.otbs.www.backend.models.Train;
-import org.otbs.www.backend.repositories.TrainRepository;
+import org.otbs.www.backend.train.models.Train;
+import org.otbs.www.backend.train.repositories.TrainRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;

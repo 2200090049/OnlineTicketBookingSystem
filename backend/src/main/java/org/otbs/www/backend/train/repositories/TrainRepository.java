@@ -1,10 +1,10 @@
-package org.otbs.www.backend.repositories;
+package org.otbs.www.backend.train.repositories;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
-import org.otbs.www.backend.models.Train;
+import org.otbs.www.backend.train.models.Train;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -104,5 +104,3 @@ public interface TrainRepository extends JpaRepository<Train, Integer> {
         @Param("nextHour") LocalDateTime nextHour,
         @Param("status") Train.TrainStatus status);
 }
-
-

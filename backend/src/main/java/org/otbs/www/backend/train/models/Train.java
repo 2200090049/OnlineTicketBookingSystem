@@ -1,4 +1,4 @@
-package org.otbs.www.backend.models;
+package org.otbs.www.backend.train.models;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -229,5 +229,3 @@ public class Train {
         this.updatedAt = LocalDateTime.now();
     }
 }
-
-

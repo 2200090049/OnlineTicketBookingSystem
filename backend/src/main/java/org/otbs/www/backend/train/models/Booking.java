@@ -1,7 +1,9 @@
-package org.otbs.www.backend.models;
+package org.otbs.www.backend.train.models;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+
+import org.otbs.www.backend.models.Users;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -225,5 +227,3 @@ public class Booking {
         }
     }
 }
-
-
