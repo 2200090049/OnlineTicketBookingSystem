@@ -119,6 +119,9 @@ export const bookingsAPI = {
   getBookingStats: () => api.get('/bookings/admin/statistics'),
   processRefund: (id) => api.put(`/bookings/admin/refund/${id}`),
   
+  // Vendor endpoints
+  getAllTrainBookings: () => api.get('/bookings/vendor/all'),
+  
   // Legacy endpoints (for other booking types)
   create: (bookingData) => api.post('/bookings', bookingData),
   getById: (id) => api.get(`/bookings/${id}`),
