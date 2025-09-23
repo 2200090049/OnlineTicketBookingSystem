@@ -9,6 +9,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.DecimalMin;
@@ -160,7 +161,7 @@ public class Train {
     }
     
     public Integer getTotalSeats() {
-        return totalSeats;
+        return totalSeats != null ? totalSeats : 0;
     }
     
     public void setTotalSeats(Integer totalSeats) {
@@ -168,7 +169,7 @@ public class Train {
     }
     
     public Integer getAvailableSeats() {
-        return availableSeats;
+        return availableSeats != null ? availableSeats : 0;
     }
     
     public void setAvailableSeats(Integer availableSeats) {
@@ -227,5 +228,26 @@ public class Train {
     @PreUpdate
     public void preUpdate() {
         this.updatedAt = LocalDateTime.now();
+        ensureInitialized();
+    }
+    
+    @PrePersist
+    public void prePersist() {
+        ensureInitialized();
+    }
+    
+    private void ensureInitialized() {
+        if (this.availableSeats == null && this.totalSeats != null) {
+            this.availableSeats = this.totalSeats;
+        }
+        if (this.status == null) {
+            this.status = TrainStatus.ACTIVE;
+        }
+        if (this.createdAt == null) {
+            this.createdAt = LocalDateTime.now();
+        }
+        if (this.updatedAt == null) {
+            this.updatedAt = LocalDateTime.now();
+        }
     }
 }

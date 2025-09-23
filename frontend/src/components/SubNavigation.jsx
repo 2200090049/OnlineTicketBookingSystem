@@ -16,6 +16,11 @@ const SubNavigation = ({ className = '' }) => {
       icon: FilmIcon,
     },
     {
+      name: 'Train Tickets',
+      path: '/trains',
+      icon: TruckIcon,
+    },
+    {
       name: 'Sports',
       path: '/sports',
       icon: TrophyIcon,

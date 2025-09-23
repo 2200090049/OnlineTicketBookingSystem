@@ -162,4 +162,79 @@ public class EmailService {
             %s Team
             """, username, appName, appName, appName);
     }
+
+    public void sendBookingConfirmation(String toEmail, String passengerName, String bookingReference, 
+                                      String trainName, String trainNumber, String sourceStation, 
+                                      String destinationStation, String departureTime, String arrivalTime, 
+                                      Integer numberOfSeats, String totalAmount) {
+        try {
+            // Log booking confirmation email to console for development
+            System.out.println("=== BOOKING CONFIRMATION EMAIL ===");
+            System.out.println("To: " + toEmail);
+            System.out.println("Subject: Booking Confirmed - " + appName);
+            System.out.println("Booking Reference: " + bookingReference);
+            System.out.println("===================================");
+            
+            // Try to send actual email
+            try {
+                SimpleMailMessage message = new SimpleMailMessage();
+                message.setFrom(fromEmail);
+                message.setTo(toEmail);
+                message.setSubject("Booking Confirmed - " + appName);
+                message.setText(buildBookingConfirmationEmailBody(passengerName, bookingReference, 
+                    trainName, trainNumber, sourceStation, destinationStation, departureTime, 
+                    arrivalTime, numberOfSeats, totalAmount));
+                
+                mailSender.send(message);
+                System.out.println("✅ Booking confirmation email sent successfully to: " + toEmail);
+            } catch (Exception emailError) {
+                System.err.println("❌ Failed to send booking confirmation email, but logged above: " + emailError.getMessage());
+                // Don't throw exception, just log the error
+            }
+        } catch (Exception e) {
+            System.err.println("Failed to send booking confirmation email: " + e.getMessage());
+            // Don't throw exception for booking confirmation email as it's not critical
+        }
+    }
+
+    private String buildBookingConfirmationEmailBody(String passengerName, String bookingReference, 
+                                                   String trainName, String trainNumber, String sourceStation, 
+                                                   String destinationStation, String departureTime, 
+                                                   String arrivalTime, Integer numberOfSeats, String totalAmount) {
+        return String.format("""
+            Dear %s,
+            
+            Your train ticket has been successfully booked!
+            
+            BOOKING DETAILS:
+            ================
+            Booking Reference: %s
+            Train: %s (%s)
+            Route: %s → %s
+            Departure: %s
+            Arrival: %s
+            Number of Seats: %d
+            Total Amount: %s
+            
+            IMPORTANT INFORMATION:
+            =====================
+            • Your ticket has been attached to this email as a PDF.
+            • Please arrive at the station at least 30 minutes before departure.
+            • Carry a valid ID proof along with your ticket.
+            • You can download your ticket anytime from your booking history.
+            
+            CANCELLATION POLICY:
+            ===================
+            • Cancellation is allowed up to 24 hours before departure.
+            • Refunds will be processed within 5-7 business days.
+            
+            Thank you for choosing %s for your travel needs!
+            
+            Safe travels!
+            
+            Best regards,
+            %s Team
+            """, passengerName, bookingReference, trainName, trainNumber, sourceStation, 
+            destinationStation, departureTime, arrivalTime, numberOfSeats, totalAmount, appName, appName);
+    }
 }

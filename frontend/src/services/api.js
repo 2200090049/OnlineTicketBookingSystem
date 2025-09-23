@@ -122,7 +122,7 @@ export const bookingsAPI = {
   // Legacy endpoints (for other booking types)
   create: (bookingData) => api.post('/bookings', bookingData),
   getById: (id) => api.get(`/bookings/${id}`),
-  getUserBookings: (userId) => api.get(`/bookings/user/${userId}`),
+  getUserBookingsById: (userId) => api.get(`/bookings/user/${userId}`),
   cancel: (id) => api.put(`/bookings/${id}/cancel`),
   updateStatus: (id, status) => api.put(`/bookings/${id}/status`, { status }),
 };

@@ -15,6 +15,8 @@ import Profile from './pages/Profile';
 import UserDashboard from './pages/UserDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import TrainBooking from './pages/TrainBooking';
+import TrainSeatSelection from './pages/TrainSeatSelection';
+import UserBookings from './pages/UserBookings';
 import TrainAdmin from './pages/vendor/TrainAdmin';
 
 import './App.css';
@@ -90,7 +92,10 @@ const App = () => {
               } />
               <Route path="/profile" element={<Profile />} />
               <Route path="/user/dashboard" element={<UserDashboard />} />
+              <Route path="/user/bookings" element={<UserBookings />} />
               <Route path="/admin/dashboard" element={<AdminDashboard />} />
+              <Route path="/train-booking" element={<TrainBooking />} />
+              <Route path="/train-booking/seats" element={<TrainSeatSelection />} />
               <Route path="/trains" element={<TrainBooking />} />
               <Route path="/vendor/trains" element={<TrainAdmin />} />
               <Route path="/buses" element={<div>Bus booking coming soon...</div>} />
