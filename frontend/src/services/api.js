@@ -54,10 +54,12 @@ export const authAPI = {
   login: (credentials) => api.post('/auth/login', credentials),
   register: (userData) => api.post('/auth/register', userData),
   verifyOtp: (otpData) => api.post('/auth/verify-otp', otpData),
+  resendOtp: (emailData) => api.post('/auth/resend-otp', emailData),
+  forgotPassword: (emailData) => api.post('/auth/forgot-password', emailData),
+  resetPassword: (resetData) => api.post('/auth/reset-password', resetData),
+  validateOtp: (otpData) => api.post('/auth/validate-otp', otpData),
   logout: () => api.post('/auth/logout'),
   refreshToken: () => api.post('/auth/refresh'),
-  forgotPassword: (email) => api.post('/auth/forgot-password', { email }),
-  resetPassword: (token, password) => api.post('/auth/reset-password', { token, password }),
 };
 
 // Movies API endpoints
@@ -86,8 +88,38 @@ export const busesAPI = {
   getRoutes: () => api.get('/buses/routes'),
 };
 
+// Train API endpoints
+export const trainAPI = {
+  // Admin endpoints
+  addTrain: (trainData) => api.post('/trains/admin/add', trainData),
+  updateTrain: (id, trainData) => api.put(`/trains/admin/update/${id}`, trainData),
+  deleteTrain: (id) => api.delete(`/trains/admin/delete/${id}`),
+  getAllTrains: (params) => api.get('/trains/admin/all', { params }),
+  updateTrainStatus: (id, status) => api.put(`/trains/admin/status/${id}`, { status }),
+  
+  // User endpoints
+  getAvailableTrains: () => api.get('/trains/available'),
+  searchTrains: (params) => api.get('/trains/search', { params }),
+  getTrainById: (id) => api.get(`/trains/${id}`),
+  checkAvailability: (id, date) => api.get(`/trains/available/${id}`, { params: { date } }),
+  getTrainDetails: (id) => api.get(`/trains/details/${id}`),
+};
+
 // Bookings API endpoints
 export const bookingsAPI = {
+  // Train bookings
+  bookTrain: (bookingData) => api.post('/bookings/book', bookingData),
+  getUserBookings: () => api.get('/bookings/my-bookings'),
+  cancelBooking: (id) => api.put(`/bookings/cancel/${id}`),
+  getBookingById: (id) => api.get(`/bookings/${id}`),
+  downloadTicket: (id) => api.get(`/bookings/${id}/download`, { responseType: 'blob' }),
+  
+  // Admin endpoints
+  getAllBookings: (params) => api.get('/bookings/admin/all', { params }),
+  getBookingStats: () => api.get('/bookings/admin/statistics'),
+  processRefund: (id) => api.put(`/bookings/admin/refund/${id}`),
+  
+  // Legacy endpoints (for other booking types)
   create: (bookingData) => api.post('/bookings', bookingData),
   getById: (id) => api.get(`/bookings/${id}`),
   getUserBookings: (userId) => api.get(`/bookings/user/${userId}`),

@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import { AuthProvider } from './context/AuthContext';
@@ -13,24 +12,20 @@ import Movies from './pages/Movies';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Profile from './pages/Profile';
-// import Sports from './pages/Sports';
-// import Buses from './pages/Buses';
-// import Booking from './pages/Booking';
-// import Payment from './pages/Payment';
+import UserDashboard from './pages/UserDashboard';
+import AdminDashboard from './pages/AdminDashboard';
+import TrainBooking from './pages/TrainBooking';
+import TrainAdmin from './pages/vendor/TrainAdmin';
 
 import './App.css';
 
 // Layout component to conditionally show navigation
 const Layout = ({ children }) => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
-  
-  // Show navigation on all pages now
-  const hideNavigation = false; // Changed to always show navbar
   
   const handleSearch = (searchTerm) => {
     console.log('Search:', searchTerm);
-    // Implement search functionality
   };
   
   const handleProfileClick = () => {
@@ -40,22 +35,23 @@ const Layout = ({ children }) => {
   
   const handleNotificationClick = () => {
     console.log('Notifications clicked');
-    // Show notifications
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate('/');
   };
   
   return (
     <div className="min-h-screen bg-background">
-      {!hideNavigation && (
-        <>
-          <Navbar
-            user={user}
-            onSearch={handleSearch}
-            onProfileClick={handleProfileClick}
-            onNotificationClick={handleNotificationClick}
-          />
-          <SubNavigation />
-        </>
-      )}
+      <Navbar
+        user={user}
+        onSearch={handleSearch}
+        onProfileClick={handleProfileClick}
+        onNotificationClick={handleNotificationClick}
+        onLogout={handleLogout}
+      />
+      <SubNavigation />
       <main>
         {children}
       </main>
@@ -87,20 +83,17 @@ const App = () => {
                   <Register />
                 </AuthGuard>
               } />
+              <Route path="/register" element={
+                <AuthGuard>
+                  <Register />
+                </AuthGuard>
+              } />
               <Route path="/profile" element={<Profile />} />
-              {/* 
-              <Route path="/movies/:id" element={<MovieDetails />} />
-              <Route path="/movies/:id/book" element={<MovieBooking />} />
-              <Route path="/sports" element={<Sports />} />
-              <Route path="/sports/:id" element={<SportDetails />} />
-              <Route path="/sports/:id/book" element={<SportBooking />} />
-              <Route path="/buses" element={<Buses />} />
-              <Route path="/buses/:id/book" element={<BusBooking />} />
-              <Route path="/booking" element={<Booking />} />
-              <Route path="/booking/:id" element={<BookingDetails />} />
-              <Route path="/payment" element={<Payment />} />
-              <Route path="*" element={<NotFound />} />
-              */}
+              <Route path="/user/dashboard" element={<UserDashboard />} />
+              <Route path="/admin/dashboard" element={<AdminDashboard />} />
+              <Route path="/trains" element={<TrainBooking />} />
+              <Route path="/vendor/trains" element={<TrainAdmin />} />
+              <Route path="/buses" element={<div>Bus booking coming soon...</div>} />
             </Routes>
           </Layout>
         </Router>

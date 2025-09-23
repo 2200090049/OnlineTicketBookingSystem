@@ -19,9 +19,10 @@ const AUTH_ACTIONS = {
   REGISTER_START: 'REGISTER_START',
   REGISTER_SUCCESS: 'REGISTER_SUCCESS',
   REGISTER_FAILURE: 'REGISTER_FAILURE',
-  OTP_VERIFICATION_START: 'OTP_VERIFICATION_START',
-  OTP_VERIFICATION_SUCCESS: 'OTP_VERIFICATION_SUCCESS',
-  OTP_VERIFICATION_FAILURE: 'OTP_VERIFICATION_FAILURE',
+  OTP_SENT: 'OTP_SENT',
+  OTP_VERIFY_START: 'OTP_VERIFY_START',
+  OTP_VERIFY_SUCCESS: 'OTP_VERIFY_SUCCESS',
+  OTP_VERIFY_FAILURE: 'OTP_VERIFY_FAILURE',
   CLEAR_ERROR: 'CLEAR_ERROR',
   SET_USER: 'SET_USER',
 };
@@ -31,7 +32,7 @@ const authReducer = (state, action) => {
   switch (action.type) {
     case AUTH_ACTIONS.LOGIN_START:
     case AUTH_ACTIONS.REGISTER_START:
-    case AUTH_ACTIONS.OTP_VERIFICATION_START:
+    case AUTH_ACTIONS.OTP_VERIFY_START:
       return {
         ...state,
         isLoading: true,
@@ -39,7 +40,6 @@ const authReducer = (state, action) => {
       };
     
     case AUTH_ACTIONS.LOGIN_SUCCESS:
-    case AUTH_ACTIONS.OTP_VERIFICATION_SUCCESS:
       return {
         ...state,
         user: action.payload.user,
@@ -59,13 +59,29 @@ const authReducer = (state, action) => {
     
     case AUTH_ACTIONS.LOGIN_FAILURE:
     case AUTH_ACTIONS.REGISTER_FAILURE:
-    case AUTH_ACTIONS.OTP_VERIFICATION_FAILURE:
+    case AUTH_ACTIONS.OTP_VERIFY_FAILURE:
       return {
         ...state,
         user: null,
         isAuthenticated: false,
         isLoading: false,
         error: action.payload.error,
+      };
+    
+    case AUTH_ACTIONS.OTP_SENT:
+      return {
+        ...state,
+        isLoading: false,
+        error: null,
+      };
+    
+    case AUTH_ACTIONS.OTP_VERIFY_SUCCESS:
+      return {
+        ...state,
+        user: action.payload.user,
+        isAuthenticated: true,
+        isLoading: false,
+        error: null,
       };
     
     case AUTH_ACTIONS.LOGOUT:
@@ -145,7 +161,7 @@ export const AuthProvider = ({ children }) => {
           payload: { user },
         });
         
-        return { success: true };
+        return { success: true, userRole: user.role };
       } else {
         throw new Error(response.data.message || 'Login failed');
       }
@@ -159,7 +175,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Register function (Step 1: Send registration data)
+  // Register function - Initiate registration with OTP
   const register = async (userData) => {
     dispatch({ type: AUTH_ACTIONS.REGISTER_START });
     
@@ -170,44 +186,26 @@ export const AuthProvider = ({ children }) => {
         email: userData.email,
         password: userData.password,
         phone: userData.phone,
+        role: 'USER' // Explicitly set role as USER for frontend registrations
       };
       
       const response = await authAPI.register(registerData);
       
-      // Check if backend returns user data and token directly (no OTP required)
-      if (response.data.token && response.data.user) {
-        // Direct registration success with token
-        const { user, token } = response.data;
-        
-        console.log('Registration successful, storing token and user data:', { user, token });
-        
-        // Store in localStorage
-        localStorage.setItem('authToken', token);
-        localStorage.setItem('userData', JSON.stringify(user));
-        
+      // Backend now sends OTP for verification
+      if (response.data.message && response.data.message.includes('OTP sent')) {
         dispatch({
-          type: AUTH_ACTIONS.REGISTER_SUCCESS,
-          payload: { user },
+          type: AUTH_ACTIONS.OTP_SENT,
+          payload: { email: userData.email },
         });
         
         return { 
           success: true, 
-          message: response.data.message || 'Registration successful',
-          directLogin: true // Flag to indicate user is logged in
+          message: response.data.message,
+          requiresOTP: true,
+          email: userData.email
         };
       } else {
-        // OTP flow - Registration initiated successfully, OTP sent
-        dispatch({
-          type: AUTH_ACTIONS.REGISTER_SUCCESS,
-          payload: { message: response.data.message || 'OTP sent successfully' },
-        });
-        
-        return { 
-          success: true, 
-          message: response.data.message || 'OTP sent to your email',
-          email: userData.email,
-          directLogin: false // Flag to indicate OTP verification needed
-        };
+        throw new Error('Unexpected response from registration endpoint');
       }
     } catch (error) {
       const errorMessage = error.response?.data?.message || error.message || 'Registration failed';
@@ -219,45 +217,71 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // OTP Verification function (Step 2: Verify OTP)
+  // Verify OTP function
   const verifyOtp = async (email, otp) => {
-    dispatch({ type: AUTH_ACTIONS.OTP_VERIFICATION_START });
+    dispatch({ type: AUTH_ACTIONS.OTP_VERIFY_START });
     
     try {
       const response = await authAPI.verifyOtp({ email, otp });
       
-      // Check if verification was successful
-      if (response.data.message === 'Registration successful') {
-        // If backend provides user and token after OTP verification
-        const user = response.data.user || {
-          email: email,
-          username: response.data.username,
-        };
+      if (response.data.message === "Registration successful" && response.data.token) {
+        const { user, token } = response.data;
         
-        // Store token if provided
-        if (response.data.token) {
-          localStorage.setItem('authToken', response.data.token);
-          localStorage.setItem('userData', JSON.stringify(user));
-        }
+        console.log('OTP verification successful, storing token and user data:', { user, token });
+        
+        // Store in localStorage
+        localStorage.setItem('authToken', token);
+        localStorage.setItem('userData', JSON.stringify(user));
         
         dispatch({
-          type: AUTH_ACTIONS.OTP_VERIFICATION_SUCCESS,
+          type: AUTH_ACTIONS.OTP_VERIFY_SUCCESS,
           payload: { user },
         });
         
-        return { success: true };
+        return { 
+          success: true, 
+          message: response.data.message,
+          user: user
+        };
       } else {
         throw new Error(response.data.message || 'OTP verification failed');
       }
     } catch (error) {
       const errorMessage = error.response?.data?.message || error.message || 'OTP verification failed';
       dispatch({
-        type: AUTH_ACTIONS.OTP_VERIFICATION_FAILURE,
+        type: AUTH_ACTIONS.OTP_VERIFY_FAILURE,
         payload: { error: errorMessage },
       });
       return { success: false, error: errorMessage };
     }
   };
+
+  // Resend OTP function
+  const resendOtp = async (email) => {
+    dispatch({ type: AUTH_ACTIONS.REGISTER_START });
+    
+    try {
+      const response = await authAPI.resendOtp({ email });
+      
+      dispatch({
+        type: AUTH_ACTIONS.OTP_SENT,
+        payload: { email },
+      });
+      
+      return { 
+        success: true, 
+        message: response.data.message
+      };
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to resend OTP';
+      dispatch({
+        type: AUTH_ACTIONS.REGISTER_FAILURE,
+        payload: { error: errorMessage },
+      });
+      return { success: false, error: errorMessage };
+    }
+  };
+
 
   // Logout function
   const logout = () => {
@@ -276,6 +300,7 @@ export const AuthProvider = ({ children }) => {
     login,
     register,
     verifyOtp,
+    resendOtp,
     logout,
     clearError,
   };

@@ -1,6 +1,8 @@
 package org.otbs.www.backend.models;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -33,11 +35,26 @@ public class Users {
     private String phone;
 
     private String role = "USER";
-    private String status = "PENDING";
+    private String status = "ACTIVE";
     private String city;
     private String last_login;
+    
+    // Vendor fields
+    private boolean isVendor = false;
+    
+    @Enumerated(EnumType.STRING)
+    private Vendor_Type vendorType = Vendor_Type.Defualt;
     private String deleted_at;
     private String updated_at;
+    
+    public boolean isVendor() {
+        return isVendor;
+    }
+    
+    public void setVendor(boolean isVendor) {
+        this.isVendor = isVendor;
+    }
+    	
 
     public Integer getSpent() {
         return spent;
@@ -147,4 +164,11 @@ public class Users {
     public void setUpdated_at(String updated_at) {
         this.updated_at = updated_at;
     }
+	public Vendor_Type getVendorType() {
+		return vendorType;
+	}
+	
+	public void setVendorType(Vendor_Type vendorType) {
+		this.vendorType = vendorType;
+	}
 }

@@ -1,16 +1,39 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { UserCircleIcon, BellIcon, Bars3Icon, XMarkIcon, ArrowRightOnRectangleIcon, UserPlusIcon } from '@heroicons/react/24/outline';
+import { Link, useNavigate } from 'react-router-dom';
+import { UserCircleIcon, BellIcon, Bars3Icon, XMarkIcon, ArrowRightOnRectangleIcon, UserPlusIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
 import { TicketIcon } from '@heroicons/react/24/solid';
 import PropTypes from 'prop-types';
 import SearchBar from './SearchBar';
 import Button from './Button';
 
-const Navbar = ({ user, onSearch, onProfileClick, onNotificationClick }) => {
+const Navbar = ({ user, onSearch, onProfileClick, onNotificationClick, onLogout }) => {
+  const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
+
+  const toggleUserMenu = () => {
+    setIsUserMenuOpen(!isUserMenuOpen);
+  };
+
+  const handleLogout = () => {
+    if (onLogout) {
+      onLogout();
+    }
+    setIsUserMenuOpen(false);
+    navigate('/');
+  };
+
+  const handleDashboardClick = () => {
+    if (user?.role === 'ADMIN') {
+      navigate('/admin/dashboard');
+    } else {
+      navigate('/user/dashboard');
+    }
+    setIsUserMenuOpen(false);
   };
 
   return (
@@ -48,9 +71,9 @@ const Navbar = ({ user, onSearch, onProfileClick, onNotificationClick }) => {
 
             {/* User Profile */}
             {user ? (
-              <div className="flex items-center space-x-3">
+              <div className="relative">
                 <button
-                  onClick={onProfileClick}
+                  onClick={toggleUserMenu}
                   className="flex items-center space-x-2 p-2 rounded-lg hover:bg-surface transition-colors group"
                 >
                   <UserCircleIcon className="h-8 w-8 text-text-secondary group-hover:text-primary-main transition-colors" />
@@ -58,9 +81,38 @@ const Navbar = ({ user, onSearch, onProfileClick, onNotificationClick }) => {
                     <p className="text-sm font-medium text-text-primary group-hover:text-primary-main transition-colors">
                       {user.name || user.username || 'User'}
                     </p>
-                    <p className="text-xs text-text-secondary">View Profile</p>
+                    <p className="text-xs text-text-secondary">
+                      {user.role === 'ADMIN' ? 'Administrator' : 'User'}
+                    </p>
                   </div>
+                  <ChevronDownIcon className="h-4 w-4 text-text-secondary" />
                 </button>
+
+                {/* User Dropdown Menu */}
+                {isUserMenuOpen && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
+                    <button
+                      onClick={handleDashboardClick}
+                      className="w-full text-left px-4 py-2 text-sm text-text-primary hover:bg-surface transition-colors"
+                    >
+                      {user.role === 'ADMIN' ? 'Admin Dashboard' : 'User Dashboard'}
+                    </button>
+                    <button
+                      onClick={onProfileClick}
+                      className="w-full text-left px-4 py-2 text-sm text-text-primary hover:bg-surface transition-colors"
+                    >
+                      View Profile
+                    </button>
+                    <hr className="my-1" />
+                    <button
+                      onClick={handleLogout}
+                      className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center space-x-2"
+                    >
+                      <ArrowRightOnRectangleIcon className="h-4 w-4" />
+                      <span>Logout</span>
+                    </button>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="flex items-center space-x-2">
@@ -104,9 +156,9 @@ const Navbar = ({ user, onSearch, onProfileClick, onNotificationClick }) => {
             
             {/* Mobile User Profile */}
             {user && (
-              <div className="mt-4 pt-4 border-t border-gray-100">
+              <div className="mt-4 pt-4 border-t border-gray-100 space-y-2">
                 <button
-                  onClick={onProfileClick}
+                  onClick={handleDashboardClick}
                   className="flex items-center space-x-3 w-full p-3 rounded-lg hover:bg-surface transition-colors"
                 >
                   <UserCircleIcon className="h-10 w-10 text-primary-main" />
@@ -114,8 +166,23 @@ const Navbar = ({ user, onSearch, onProfileClick, onNotificationClick }) => {
                     <p className="font-medium text-text-primary">
                       {user.name || user.username || 'User'}
                     </p>
-                    <p className="text-sm text-text-secondary">View Profile</p>
+                    <p className="text-sm text-text-secondary">
+                      {user.role === 'ADMIN' ? 'Admin Dashboard' : 'User Dashboard'}
+                    </p>
                   </div>
+                </button>
+                <button
+                  onClick={onProfileClick}
+                  className="w-full text-left px-3 py-2 text-sm text-text-primary hover:bg-surface transition-colors rounded-lg"
+                >
+                  View Profile
+                </button>
+                <button
+                  onClick={handleLogout}
+                  className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors rounded-lg flex items-center space-x-2"
+                >
+                  <ArrowRightOnRectangleIcon className="h-4 w-4" />
+                  <span>Logout</span>
                 </button>
               </div>
             )}
@@ -131,10 +198,12 @@ Navbar.propTypes = {
     name: PropTypes.string,
     username: PropTypes.string,
     email: PropTypes.string,
+    role: PropTypes.string,
   }),
   onSearch: PropTypes.func,
   onProfileClick: PropTypes.func,
   onNotificationClick: PropTypes.func,
+  onLogout: PropTypes.func,
 };
 
 export default Navbar;
