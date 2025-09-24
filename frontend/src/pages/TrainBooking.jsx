@@ -432,7 +432,6 @@ const TrainBooking = () => {
                     setSearchParams({
                       source: '',
                       destination: '',
-                      date: '',
                       passengers: 1
                     });
                     setFilteredTrains(trains);

@@ -127,9 +127,11 @@ public class BusBookingController {
         try {
             Users user = jwtUtil.getUserFromToken(token);
             
-            // Check if user is BUSES_ADMIN or ADMIN
-            if (!user.getRole().equals("BUSES_ADMIN") && !user.getRole().equals("ADMIN")) {
-                return ResponseEntity.status(403).body(Map.of("message", "Access denied. Requires BUSES_ADMIN or ADMIN role."));
+            // Check if user is a vendor with BUSES_ADMIN type or has ADMIN role
+            if (!user.isVendor() || !"BUSES_ADMIN".equals(user.getVendorType().toString())) {
+                if (!"ADMIN".equals(user.getRole())) {
+                    return ResponseEntity.status(403).body(Map.of("message", "Access denied. Requires BUSES_ADMIN vendor type or ADMIN role."));
+                }
             }
             
             return busBookingService.getAllBookings();
@@ -148,9 +150,11 @@ public class BusBookingController {
         try {
             Users user = jwtUtil.getUserFromToken(token);
             
-            // Check if user is BUSES_ADMIN or ADMIN
-            if (!user.getRole().equals("BUSES_ADMIN") && !user.getRole().equals("ADMIN")) {
-                return ResponseEntity.status(403).body(Map.of("message", "Access denied. Requires BUSES_ADMIN or ADMIN role."));
+            // Check if user is a vendor with BUSES_ADMIN type or has ADMIN role
+            if (!user.isVendor() || !"BUSES_ADMIN".equals(user.getVendorType().toString())) {
+                if (!"ADMIN".equals(user.getRole())) {
+                    return ResponseEntity.status(403).body(Map.of("message", "Access denied. Requires BUSES_ADMIN vendor type or ADMIN role."));
+                }
             }
             
             return busBookingService.getBookingsByBus(busId);
@@ -168,9 +172,11 @@ public class BusBookingController {
         try {
             Users user = jwtUtil.getUserFromToken(token);
             
-            // Check if user is BUSES_ADMIN or ADMIN
-            if (!user.getRole().equals("BUSES_ADMIN") && !user.getRole().equals("ADMIN")) {
-                return ResponseEntity.status(403).body(Map.of("message", "Access denied. Requires BUSES_ADMIN or ADMIN role."));
+            // Check if user is a vendor with BUSES_ADMIN type or has ADMIN role
+            if (!user.isVendor() || !"BUSES_ADMIN".equals(user.getVendorType().toString())) {
+                if (!"ADMIN".equals(user.getRole())) {
+                    return ResponseEntity.status(403).body(Map.of("message", "Access denied. Requires BUSES_ADMIN vendor type or ADMIN role."));
+                }
             }
             
             return busBookingService.getBookingStatistics();
@@ -190,9 +196,11 @@ public class BusBookingController {
         try {
             Users user = jwtUtil.getUserFromToken(token);
             
-            // Check if user is BUSES_ADMIN or ADMIN
-            if (!user.getRole().equals("BUSES_ADMIN") && !user.getRole().equals("ADMIN")) {
-                return ResponseEntity.status(403).body(Map.of("message", "Access denied. Requires BUSES_ADMIN or ADMIN role."));
+            // Check if user is a vendor with BUSES_ADMIN type or has ADMIN role
+            if (!user.isVendor() || !"BUSES_ADMIN".equals(user.getVendorType().toString())) {
+                if (!"ADMIN".equals(user.getRole())) {
+                    return ResponseEntity.status(403).body(Map.of("message", "Access denied. Requires BUSES_ADMIN vendor type or ADMIN role."));
+                }
             }
             
             return busBookingService.updateBookingStatus(bookingId, status);
@@ -211,9 +219,11 @@ public class BusBookingController {
         try {
             Users user = jwtUtil.getUserFromToken(token);
             
-            // Check if user is BUSES_ADMIN or ADMIN
-            if (!user.getRole().equals("BUSES_ADMIN") && !user.getRole().equals("ADMIN")) {
-                return ResponseEntity.status(403).body(Map.of("message", "Access denied. Requires BUSES_ADMIN or ADMIN role."));
+            // Check if user is a vendor with BUSES_ADMIN type or has ADMIN role
+            if (!user.isVendor() || !"BUSES_ADMIN".equals(user.getVendorType().toString())) {
+                if (!"ADMIN".equals(user.getRole())) {
+                    return ResponseEntity.status(403).body(Map.of("message", "Access denied. Requires BUSES_ADMIN vendor type or ADMIN role."));
+                }
             }
             
             return busBookingService.getPassengerManifest(busId);
@@ -232,9 +242,11 @@ public class BusBookingController {
         try {
             Users user = jwtUtil.getUserFromToken(token);
             
-            // Check if user is BUSES_ADMIN or ADMIN
-            if (!user.getRole().equals("BUSES_ADMIN") && !user.getRole().equals("ADMIN")) {
-                return ResponseEntity.status(403).body(Map.of("message", "Access denied. Requires BUSES_ADMIN or ADMIN role."));
+            // Check if user is a vendor with BUSES_ADMIN type or has ADMIN role
+            if (!user.isVendor() || !"BUSES_ADMIN".equals(user.getVendorType().toString())) {
+                if (!"ADMIN".equals(user.getRole())) {
+                    return ResponseEntity.status(403).body(Map.of("message", "Access denied. Requires BUSES_ADMIN vendor type or ADMIN role."));
+                }
             }
             
             return busBookingService.processRefund(bookingId);

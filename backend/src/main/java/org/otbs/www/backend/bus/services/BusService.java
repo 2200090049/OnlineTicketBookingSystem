@@ -248,17 +248,28 @@ public class BusService {
         Map<String, Object> response = new HashMap<>();
         
         try {
-            List<Bus> buses = busRepository.findAvailableBusesByRouteAndDate(
-                sourceCity, destinationCity, departureDate, Bus.BusStatus.ACTIVE);
+            List<Bus> buses;
+            
+            if (departureDate != null) {
+                // Search with specific date
+                buses = busRepository.findAvailableBusesByRouteAndDate(
+                    sourceCity, destinationCity, departureDate, Bus.BusStatus.ACTIVE);
+            } else {
+                // Search without date filter - get all active buses for the route
+                buses = busRepository.findBySourceCityAndDestinationCityAndStatus(
+                    sourceCity, destinationCity, Bus.BusStatus.ACTIVE);
+            }
             
             response.put("message", "Bus search completed");
             response.put("buses", buses);
             response.put("count", buses.size());
-            response.put("searchCriteria", Map.of(
-                "sourceCity", sourceCity,
-                "destinationCity", destinationCity,
-                "departureDate", departureDate
-            ));
+            Map<String, Object> searchCriteria = new HashMap<>();
+            searchCriteria.put("sourceCity", sourceCity);
+            searchCriteria.put("destinationCity", destinationCity);
+            if (departureDate != null) {
+                searchCriteria.put("departureDate", departureDate);
+            }
+            response.put("searchCriteria", searchCriteria);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             response.put("message", "Failed to search buses: " + e.getMessage());

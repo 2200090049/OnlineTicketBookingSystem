@@ -18,7 +18,9 @@ import TrainBooking from './pages/TrainBooking';
 import TrainSeatSelection from './pages/TrainSeatSelection';
 import UserBookings from './pages/UserBookings';
 import TrainAdmin from './pages/vendor/TrainAdmin';
+import BusAdmin from './pages/vendor/BusAdmin';
 import BusBooking from './pages/BusBooking';
+import BusSeatSelection from './pages/BusSeatSelection';
 import TrainVendorBookings from './pages/TrainVendorBookings';
 
 import './App.css';
@@ -100,9 +102,10 @@ const App = () => {
               <Route path="/train-booking/seats" element={<TrainSeatSelection />} />
               <Route path="/trains" element={<TrainBooking />} />
               <Route path="/vendor/trains" element={<TrainAdmin />} />
+              <Route path="/vendor/buses" element={<BusAdmin />} />
               <Route path="/buses" element={<BusBooking />} />
+              <Route path="/buses/seats" element={<BusSeatSelection />} />
               <Route path="/vendor/bookings" element={<TrainVendorBookings />} />
-              <Route path="/buses" element={<div>Bus booking coming soon...</div>} />
             </Routes>
           </Layout>
         </Router>

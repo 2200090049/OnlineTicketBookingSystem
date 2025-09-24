@@ -84,9 +84,11 @@ export const sportsAPI = {
 export const busesAPI = {
   // User endpoints
   search: (params) => api.get('/buses/search', { params }),
+  searchBuses: (params) => api.get('/buses/search', { params }), // Alias for compatibility
   searchAdvanced: (params) => api.get('/buses/search/advanced', { params }),
   getById: (id) => api.get(`/buses/${id}`),
   getAvailable: () => api.get('/buses/available'),
+  getAvailableBuses: () => api.get('/buses/available'), // Alias for compatibility
   getRoutes: () => api.get('/buses/routes'),
   getOperators: () => api.get('/buses/operators'),
   getPopularRoutes: () => api.get('/buses/routes/popular'),
@@ -97,7 +99,7 @@ export const busesAPI = {
   updateBus: (id, busData) => api.put(`/buses/admin/${id}`, busData),
   deleteBus: (id) => api.delete(`/buses/admin/${id}`),
   getAllBuses: () => api.get('/buses/admin'),
-  updateBusStatus: (id, status) => api.put(`/buses/admin/${id}/status`, { params: { status } }),
+  updateBusStatus: (id, status) => api.put(`/buses/admin/${id}/status`, null, { params: { status } }),
   getBusStatistics: () => api.get('/buses/admin/statistics'),
   
   // Test endpoint
@@ -113,6 +115,7 @@ export const busBookingsAPI = {
   cancelBooking: (id) => api.put(`/bus-bookings/${id}/cancel`),
   getBookingById: (id) => api.get(`/bus-bookings/${id}`),
   getBookingByReference: (ref) => api.get(`/bus-bookings/reference/${ref}`),
+  downloadTicket: (id) => api.get(`/bus-bookings/${id}/download`, { responseType: 'blob' }),
   
   // Admin endpoints
   getAllBookings: () => api.get('/bus-bookings/admin/all'),

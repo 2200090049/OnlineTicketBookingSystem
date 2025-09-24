@@ -27,7 +27,6 @@ const BusBooking = () => {
   const [searchParams, setSearchParams] = useState({
     source: '',
     destination: '',
-    date: '',
     passengers: 1
   });
   const [showFilters, setShowFilters] = useState(false);
@@ -124,46 +123,62 @@ const BusBooking = () => {
     }
   };
 
-  const handleSearch = () => {
-    // Ensure buses is an array before filtering
-    if (!Array.isArray(buses)) {
-      console.error('Buses is not an array:', buses);
-      return;
+  const handleSearch = async () => {
+    try {
+      setIsLoading(true);
+      
+      // If no search criteria, show all buses
+      if (!searchParams.source && !searchParams.destination) {
+        setFilteredBuses(buses);
+        return;
+      }
+
+      // Call backend search API with proper parameter names
+      const searchQuery = {
+        sourceCity: searchParams.source || '',
+        destinationCity: searchParams.destination || ''
+      };
+
+      console.log('Searching buses with params:', searchQuery);
+      const response = await busesAPI.searchBuses(searchQuery);
+      console.log('Full API response:', response);
+      
+      // Backend returns data in response.data.buses or response.data
+      const searchResults = Array.isArray(response.data?.buses) ? response.data.buses : 
+                           Array.isArray(response.data) ? response.data : [];
+      
+      console.log('Search results:', searchResults);
+      setFilteredBuses(searchResults);
+      
+    } catch (error) {
+      console.error('Error searching buses:', error);
+      
+      // Fallback to local filtering if API fails
+      if (Array.isArray(buses)) {
+        const filtered = buses.filter(bus => {
+          let matches = true;
+          
+          // Filter by source city
+          if (searchParams.source) {
+            matches = matches && bus.sourceCity.toLowerCase().includes(searchParams.source.toLowerCase());
+          }
+          
+          // Filter by destination city
+          if (searchParams.destination) {
+            matches = matches && bus.destinationCity.toLowerCase().includes(searchParams.destination.toLowerCase());
+          }
+          
+          // Filter by available seats
+          matches = matches && bus.availableSeats >= searchParams.passengers;
+          
+          return matches;
+        });
+
+        setFilteredBuses(filtered);
+      }
+    } finally {
+      setIsLoading(false);
     }
-
-    // If no search criteria, show all buses
-    if (!searchParams.source && !searchParams.destination && !searchParams.date) {
-      setFilteredBuses(buses);
-      return;
-    }
-
-    const filtered = buses.filter(bus => {
-      let matches = true;
-      
-      // Filter by source city
-      if (searchParams.source) {
-        matches = matches && bus.sourceCity.toLowerCase().includes(searchParams.source.toLowerCase());
-      }
-      
-      // Filter by destination city
-      if (searchParams.destination) {
-        matches = matches && bus.destinationCity.toLowerCase().includes(searchParams.destination.toLowerCase());
-      }
-      
-      // Filter by date
-      if (searchParams.date) {
-        const busDate = new Date(bus.departureTime).toDateString();
-        const searchDate = new Date(searchParams.date).toDateString();
-        matches = matches && busDate === searchDate;
-      }
-      
-      // Filter by available seats
-      matches = matches && bus.availableSeats >= searchParams.passengers;
-      
-      return matches;
-    });
-
-    setFilteredBuses(filtered);
   };
 
   const handleBookBus = async (bus) => {
@@ -173,7 +188,7 @@ const BusBooking = () => {
     }
 
     // Navigate directly to seat selection page
-    navigate('/bus-booking/seats', { 
+    navigate('/buses/seats', { 
       state: { 
         bus: bus,
         passengers: searchParams.passengers 
@@ -383,17 +398,6 @@ const BusBooking = () => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Date
-                </label>
-                <input
-                  type="date"
-                  value={searchParams.date}
-                  onChange={(e) => setSearchParams({...searchParams, date: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Passengers
                 </label>
                 <select
@@ -406,6 +410,7 @@ const BusBooking = () => {
                   ))}
                 </select>
               </div>
+              <div></div> {/* Empty column for spacing */}
               <div className="flex items-end space-x-2">
                 <Button 
                   onClick={handleSearch}
@@ -429,7 +434,6 @@ const BusBooking = () => {
                     setSearchParams({
                       source: '',
                       destination: '',
-                      date: '',
                       passengers: 1
                     });
                     setFilteredBuses(buses);
