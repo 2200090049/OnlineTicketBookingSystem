@@ -18,7 +18,9 @@ import org.springframework.stereotype.Service;
 
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
+import org.springframework.transaction.annotation.Transactional;
 
+@Transactional
 @Service
 public class UserService {
 
@@ -150,14 +152,17 @@ public class UserService {
                         .body(Map.of("message", "User not authenticated"));
             }
 
+            System.out.println("Current avatar: " + currentUser.getAvatar()); // Debug log
+            System.out.println("New avatar URL: " + avatarUrl); // Debug log
+
             // Check if account is active
             if (!"ACTIVE".equals(currentUser.getStatus())) {
                 return ResponseEntity.badRequest()
                         .body(Map.of("message", "Account is not active"));
             }
 
-            // Validate avatar URL (basic validation)
-            if (avatarUrl.length() > 500) { // Assuming max URL length
+            // Validate avatar URL
+            if (avatarUrl.length() > 500) {
                 return ResponseEntity.badRequest()
                         .body(Map.of("message", "Avatar URL is too long"));
             }
@@ -166,12 +171,15 @@ public class UserService {
             currentUser.setAvatar(avatarUrl);
             Users savedUser = userRepo.save(currentUser);
 
+            System.out.println("Saved avatar: " + savedUser.getAvatar()); // Debug log
+
             Map<String, Object> response = new HashMap<>();
             response.put("message", "Avatar updated successfully");
             response.put("user", createUserResponse(savedUser));
 
             return ResponseEntity.ok(response);
         } catch (Exception e) {
+            e.printStackTrace(); // Add this for debugging
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("message", "Failed to update avatar: " + e.getMessage()));
         }
