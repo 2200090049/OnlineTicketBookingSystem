@@ -33,23 +33,29 @@ const UserDashboard = () => {
   const loadRecentBookings = async () => {
     try {
       setIsLoading(true);
-      // Mock data for now
-      setRecentBookings([
-        {
-          id: 1,
-          type: 'train',
-          trainName: 'Express Superfast',
-          from: 'Delhi',
-          to: 'Mumbai',
-          date: '2024-12-25',
-          time: '08:00',
-          status: 'confirmed',
-          seats: 2,
-          amount: 3000
-        }
-      ]);
+      const { bookingsAPI } = await import('../services/api');
+      const response = await bookingsAPI.getUserBookings();
+      const bookings = response.data.bookings || [];
+      
+      // Convert to dashboard format and take only first 3
+      const recentBookings = bookings.slice(0, 3).map(booking => ({
+        id: booking.id,
+        type: 'train',
+        trainName: booking.train?.trainName || 'Train Name Not Available',
+        from: booking.train?.sourceStation || 'N/A',
+        to: booking.train?.destinationStation || 'N/A',
+        date: booking.train?.departureTime ? new Date(booking.train.departureTime).toISOString().split('T')[0] : 'N/A',
+        time: booking.train?.departureTime ? new Date(booking.train.departureTime).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : 'N/A',
+        status: booking.status,
+        seats: booking.numberOfSeats,
+        amount: booking.totalAmount
+      }));
+      
+      setRecentBookings(recentBookings);
     } catch (error) {
       console.error('Error loading recent bookings:', error);
+      // Set empty array on error
+      setRecentBookings([]);
     } finally {
       setIsLoading(false);
     }
@@ -81,7 +87,7 @@ const UserDashboard = () => {
       icon: TruckIcon,
       color: 'bg-blue-500',
       hoverColor: 'hover:bg-blue-600',
-      onClick: () => navigate('/trains')
+      onClick: () => navigate('/train-booking')
     }
   ];
 
@@ -176,7 +182,7 @@ const UserDashboard = () => {
             <h2 className="text-2xl font-bold text-gray-900">Recent Bookings</h2>
             <Button 
               variant="outline" 
-              onClick={() => navigate('/bookings')}
+              onClick={() => navigate('/user/bookings')}
             >
               View All
             </Button>
@@ -256,7 +262,7 @@ const UserDashboard = () => {
                 <p className="text-gray-600 mb-4">
                   Start by booking your first ticket using the options above.
                 </p>
-                <Button variant="primary" onClick={() => navigate('/trains')}>
+                <Button variant="primary" onClick={() => navigate('/train-booking')}>
                   Book Train Ticket
                 </Button>
               </div>
@@ -279,7 +285,7 @@ const UserDashboard = () => {
             <Button 
               variant="outline" 
               className="h-20 flex flex-col items-center justify-center space-y-2"
-              onClick={() => navigate('/bookings')}
+              onClick={() => navigate('/user/bookings')}
             >
               <TicketIcon className="h-6 w-6" />
               <span>My Bookings</span>

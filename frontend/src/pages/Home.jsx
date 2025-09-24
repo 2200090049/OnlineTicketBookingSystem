@@ -25,7 +25,52 @@ const Home = () => {
       setAvailableTrains(response.data?.trains || []);
     } catch (error) {
       console.error('Error loading trains:', error);
-      setAvailableTrains([]);
+      // Set mock data as fallback
+      const mockTrains = [
+        {
+          id: 1,
+          trainName: "Express Superfast",
+          trainNumber: "EXP123",
+          sourceStation: "Delhi",
+          destinationStation: "Mumbai",
+          departureTime: "2024-12-25T08:00:00",
+          arrivalTime: "2024-12-25T20:00:00",
+          totalSeats: 100,
+          availableSeats: 85,
+          price: 1500,
+          trainClass: "SECOND_AC",
+          status: "ACTIVE"
+        },
+        {
+          id: 2,
+          trainName: "Rajdhani Express",
+          trainNumber: "RAJ456",
+          sourceStation: "Delhi",
+          destinationStation: "Bangalore",
+          departureTime: "2024-12-25T10:00:00",
+          arrivalTime: "2024-12-26T08:00:00",
+          totalSeats: 80,
+          availableSeats: 60,
+          price: 2500,
+          trainClass: "FIRST_AC",
+          status: "ACTIVE"
+        },
+        {
+          id: 3,
+          trainName: "Shatabdi Express",
+          trainNumber: "SHAT789",
+          sourceStation: "Mumbai",
+          destinationStation: "Pune",
+          departureTime: "2024-12-25T14:00:00",
+          arrivalTime: "2024-12-25T18:00:00",
+          totalSeats: 60,
+          availableSeats: 45,
+          price: 800,
+          trainClass: "THIRD_AC",
+          status: "ACTIVE"
+        }
+      ];
+      setAvailableTrains(mockTrains);
     } finally {
       setIsLoadingTrains(false);
     }
@@ -250,7 +295,15 @@ const Home = () => {
                         <CurrencyRupeeIcon className="h-5 w-5 text-primary-main mr-1" />
                         <span className="text-lg font-bold text-primary-main">₹{train.price}</span>
                       </div>
-                      <Button size="small" onClick={(e) => { e.stopPropagation(); navigate('/trains'); }}>Book Now</Button>
+                      <Button size="small" onClick={(e) => { 
+                        e.stopPropagation(); 
+                        navigate('/train-booking/seats', {
+                          state: {
+                            train: train,
+                            passengers: 1
+                          }
+                        });
+                      }}>Book Now</Button>
                     </div>
                   </div>
                 </Card>

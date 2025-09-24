@@ -16,6 +16,11 @@ const SubNavigation = ({ className = '' }) => {
       icon: FilmIcon,
     },
     {
+      name: 'Train Tickets',
+      path: '/trains',
+      icon: TruckIcon,
+    },
+    {
       name: 'Sports',
       path: '/sports',
       icon: TrophyIcon,
@@ -46,6 +51,12 @@ const SubNavigation = ({ className = '' }) => {
         vendorItems.push({
           name: 'Trains Admin',
           path: '/vendor/trains',
+          icon: TruckIcon,
+          isVendor: true
+        });
+        vendorItems.push({
+          name: 'Train Bookings',
+          path: '/vendor/bookings',
           icon: TruckIcon,
           isVendor: true
         });

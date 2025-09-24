@@ -15,7 +15,14 @@ import Profile from './pages/Profile';
 import UserDashboard from './pages/UserDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import TrainBooking from './pages/TrainBooking';
+import TrainSeatSelection from './pages/TrainSeatSelection';
+import UserBookings from './pages/UserBookings';
 import TrainAdmin from './pages/vendor/TrainAdmin';
+import BusAdmin from './pages/vendor/BusAdmin';
+import BusBooking from './pages/BusBooking';
+import BusSeatSelection from './pages/BusSeatSelection';
+import TrainVendorBookings from './pages/TrainVendorBookings';
+import BusVendorBookings from './pages/BusVendorBookings';
 
 import './App.css';
 
@@ -90,10 +97,17 @@ const App = () => {
               } />
               <Route path="/profile" element={<Profile />} />
               <Route path="/user/dashboard" element={<UserDashboard />} />
+              <Route path="/user/bookings" element={<UserBookings />} />
               <Route path="/admin/dashboard" element={<AdminDashboard />} />
+              <Route path="/train-booking" element={<TrainBooking />} />
+              <Route path="/train-booking/seats" element={<TrainSeatSelection />} />
               <Route path="/trains" element={<TrainBooking />} />
               <Route path="/vendor/trains" element={<TrainAdmin />} />
-              <Route path="/buses" element={<div>Bus booking coming soon...</div>} />
+              <Route path="/vendor/buses" element={<BusAdmin />} />
+              <Route path="/buses" element={<BusBooking />} />
+              <Route path="/buses/seats" element={<BusSeatSelection />} />
+              <Route path="/vendor/bookings" element={<TrainVendorBookings />} />
+              <Route path="/vendor/bus-bookings" element={<BusVendorBookings />} />
             </Routes>
           </Layout>
         </Router>

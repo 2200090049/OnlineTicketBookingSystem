@@ -43,8 +43,8 @@ public interface TrainRepository extends JpaRepository<Train, Integer> {
     List<Train> findByPriceBetweenAndStatus(
         java.math.BigDecimal minPrice, java.math.BigDecimal maxPrice, Train.TrainStatus status);
     
-    // Find trains by source, destination, and date range
-    @Query("SELECT t FROM Train t WHERE t.sourceStation = :source AND t.destinationStation = :destination " +
+    // Find trains by source, destination, and date range (case-insensitive)
+    @Query("SELECT t FROM Train t WHERE LOWER(t.sourceStation) = LOWER(:source) AND LOWER(t.destinationStation) = LOWER(:destination) " +
            "AND t.departureTime >= :startDate AND t.departureTime <= :endDate AND t.status = :status " +
            "AND t.availableSeats > 0 ORDER BY t.departureTime ASC")
     List<Train> findAvailableTrainsByRouteAndDateRange(
@@ -54,8 +54,8 @@ public interface TrainRepository extends JpaRepository<Train, Integer> {
         @Param("endDate") LocalDateTime endDate,
         @Param("status") Train.TrainStatus status);
     
-    // Find trains by source, destination, and specific date
-    @Query("SELECT t FROM Train t WHERE t.sourceStation = :source AND t.destinationStation = :destination " +
+    // Find trains by source, destination, and specific date (case-insensitive)
+    @Query("SELECT t FROM Train t WHERE LOWER(t.sourceStation) = LOWER(:source) AND LOWER(t.destinationStation) = LOWER(:destination) " +
            "AND DATE(t.departureTime) = DATE(:departureDate) AND t.status = :status " +
            "AND t.availableSeats > 0 ORDER BY t.departureTime ASC")
     List<Train> findAvailableTrainsByRouteAndDate(
@@ -88,6 +88,17 @@ public interface TrainRepository extends JpaRepository<Train, Integer> {
         @Param("minSeats") Integer minSeats,
         @Param("startDate") LocalDateTime startDate,
         @Param("endDate") LocalDateTime endDate,
+        @Param("status") Train.TrainStatus status);
+    
+    // Find trains by source and destination with fuzzy matching (case-insensitive, partial match)
+    @Query("SELECT t FROM Train t WHERE " +
+           "LOWER(t.sourceStation) LIKE LOWER(CONCAT('%', :source, '%')) AND " +
+           "LOWER(t.destinationStation) LIKE LOWER(CONCAT('%', :destination, '%')) AND " +
+           "t.status = :status AND t.availableSeats > 0 " +
+           "ORDER BY t.departureTime ASC")
+    List<Train> findTrainsByRouteFuzzy(
+        @Param("source") String sourceStation,
+        @Param("destination") String destinationStation,
         @Param("status") Train.TrainStatus status);
     
     // Count trains by status

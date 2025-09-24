@@ -164,6 +164,26 @@ public class BookingController {
     }
 
     /**
+     * Get all train bookings (Train Vendor only)
+     * GET /api/bookings/vendor/all
+     */
+    @GetMapping("/vendor/all")
+    public ResponseEntity<Object> getAllTrainBookings(@RequestHeader("Authorization") String token) {
+        try {
+            Users user = jwtUtil.getUserFromToken(token);
+            // Check if user is a vendor with TRAIN_ADMIN type or has ADMIN role
+            if (!user.isVendor() || !"TRAIN_ADMIN".equals(user.getVendorType().toString())) {
+                if (!"ADMIN".equals(user.getRole())) {
+                    return ResponseEntity.status(403).body(Map.of("message", "Access denied. Train vendor access required."));
+                }
+            }
+            return bookingService.getAllBookings();
+        } catch (Exception e) {
+            return ResponseEntity.status(401).body(Map.of("message", "Invalid or expired token"));
+        }
+    }
+
+    /**
      * Get bookings by status (Admin only)
      * GET /api/bookings/admin/status/{status}
      */
@@ -299,6 +319,21 @@ public class BookingController {
             ));
         } catch (Exception e) {
             return ResponseEntity.status(401).body(Map.of("message", "Invalid or expired token"));
+        }
+    }
+
+    /**
+     * Download PDF ticket for booking
+     * GET /api/bookings/{bookingId}/download
+     */
+    @GetMapping("/{bookingId}/download")
+    public ResponseEntity<byte[]> downloadTicket(@PathVariable Integer bookingId,
+                                               @RequestHeader("Authorization") String token) {
+        try {
+            Users user = jwtUtil.getUserFromToken(token);
+            return bookingService.generateTicketPdf(bookingId, user);
+        } catch (Exception e) {
+            return ResponseEntity.status(401).build();
         }
     }
 }

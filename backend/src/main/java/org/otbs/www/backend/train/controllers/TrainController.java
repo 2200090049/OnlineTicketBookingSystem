@@ -193,12 +193,30 @@ public class TrainController {
     @GetMapping("/search")
     public ResponseEntity<Object> searchTrains(@RequestParam String sourceStation,
                                              @RequestParam String destinationStation,
-                                             @RequestParam String departureDate) {
+                                             @RequestParam(required = false) String departureDate) {
         try {
-            LocalDateTime departureDateTime = LocalDateTime.parse(departureDate);
+            LocalDateTime departureDateTime = null;
+            
+            // Only parse date if provided
+            if (departureDate != null && !departureDate.trim().isEmpty()) {
+                // Handle different date formats
+                if (departureDate.contains("T") && departureDate.contains("Z")) {
+                    // Handle ISO format with timezone: 2025-09-25T00:00:00.000Z
+                    departureDateTime = LocalDateTime.parse(departureDate.replace("Z", ""));
+                } else if (departureDate.contains("T")) {
+                    // Handle ISO format without timezone: 2025-09-25T00:00:00
+                    departureDateTime = LocalDateTime.parse(departureDate);
+                } else {
+                    // Handle simple date format: 2025-09-25
+                    departureDateTime = LocalDateTime.parse(departureDate + "T00:00:00");
+                }
+            }
+            
             return trainService.searchTrains(sourceStation, destinationStation, departureDateTime);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Invalid date format. Use: yyyy-MM-ddTHH:mm:ss"));
+            System.err.println("Date parsing error: " + e.getMessage());
+            System.err.println("Received date: " + departureDate);
+            return ResponseEntity.badRequest().body(Map.of("message", "Invalid date format. Use: yyyy-MM-ddTHH:mm:ss or yyyy-MM-dd"));
         }
     }
 

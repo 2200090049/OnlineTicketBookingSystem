@@ -13,16 +13,16 @@ import {
   XMarkIcon
 } from '@heroicons/react/24/outline';
 import { useAuth } from '../hooks/useAuth';
-import { trainAPI, bookingsAPI } from '../services/api';
+import { busesAPI, busBookingsAPI } from '../services/api';
 import Button from '../components/Button';
 import Card from '../components/Card';
 import BookingSuccess from '../components/BookingSuccess';
 
-const TrainBooking = () => {
+const BusBooking = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [trains, setTrains] = useState([]);
-  const [filteredTrains, setFilteredTrains] = useState([]);
+  const [buses, setBuses] = useState([]);
+  const [filteredBuses, setFilteredBuses] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [searchParams, setSearchParams] = useState({
     source: '',
@@ -30,7 +30,7 @@ const TrainBooking = () => {
     passengers: 1
   });
   const [showFilters, setShowFilters] = useState(false);
-  const [selectedTrain, setSelectedTrain] = useState(null);
+  const [selectedBus, setSelectedBus] = useState(null);
   const [bookingForm, setBookingForm] = useState({
     passengers: [
       {
@@ -55,66 +55,69 @@ const TrainBooking = () => {
       return;
     }
 
-    // Load all available trains
-    loadTrains();
+    // Load all available buses
+    loadBuses();
   }, [user, navigate]);
 
-  const loadTrains = async () => {
+  const loadBuses = async () => {
     try {
       setIsLoading(true);
-      const response = await trainAPI.getAvailableTrains();
-      const trainsData = Array.isArray(response.data) ? response.data : [];
-      setTrains(trainsData);
-      setFilteredTrains(trainsData);
+      const response = await busesAPI.getAvailableBuses();
+      const busesData = Array.isArray(response.data) ? response.data : [];
+      setBuses(busesData);
+      setFilteredBuses(busesData);
     } catch (error) {
-      console.error('Error loading trains:', error);
+      console.error('Error loading buses:', error);
       // Set some mock data for testing
-      const mockTrains = [
+      const mockBuses = [
         {
           id: 1,
-          trainName: "Express Superfast",
-          trainNumber: "EXP123",
-          sourceStation: "Delhi",
-          destinationStation: "Mumbai",
+          busName: "Royal Express",
+          busNumber: "RX001",
+          sourceCity: "Delhi",
+          destinationCity: "Mumbai",
           departureTime: "2024-12-25T08:00:00",
           arrivalTime: "2024-12-25T20:00:00",
-          totalSeats: 100,
-          availableSeats: 85,
-          price: 1500,
-          trainClass: "SECOND_AC",
+          totalSeats: 40,
+          availableSeats: 35,
+          price: 1200,
+          busType: "AC_SLEEPER",
+          operatorName: "Royal Travels",
           status: "ACTIVE"
         },
         {
           id: 2,
-          trainName: "Rajdhani Express",
-          trainNumber: "RAJ456",
-          sourceStation: "Delhi",
-          destinationStation: "Bangalore",
+          busName: "Comfort Plus",
+          busNumber: "CP456",
+          sourceCity: "Delhi",
+          destinationCity: "Bangalore",
           departureTime: "2024-12-25T10:00:00",
           arrivalTime: "2024-12-26T08:00:00",
-          totalSeats: 80,
-          availableSeats: 60,
-          price: 2500,
-          trainClass: "FIRST_AC",
+          totalSeats: 45,
+          availableSeats: 30,
+          price: 1800,
+          busType: "VOLVO_AC",
+          operatorName: "Comfort Travels",
           status: "ACTIVE"
         },
         {
           id: 3,
-          trainName: "Shatabdi Express",
-          trainNumber: "SHAT789",
-          sourceStation: "Mumbai",
-          destinationStation: "Pune",
+          busName: "Speed Liner",
+          busNumber: "SL789",
+          sourceCity: "Mumbai",
+          destinationCity: "Pune",
           departureTime: "2024-12-25T14:00:00",
           arrivalTime: "2024-12-25T18:00:00",
-          totalSeats: 60,
-          availableSeats: 45,
-          price: 800,
-          trainClass: "THIRD_AC",
+          totalSeats: 35,
+          availableSeats: 25,
+          price: 600,
+          busType: "AC_SEATER",
+          operatorName: "Speed Travels",
           status: "ACTIVE"
         }
       ];
-      setTrains(mockTrains);
-      setFilteredTrains(mockTrains);
+      setBuses(mockBuses);
+      setFilteredBuses(mockBuses);
     } finally {
       setIsLoading(false);
     }
@@ -124,72 +127,70 @@ const TrainBooking = () => {
     try {
       setIsLoading(true);
       
-      // If no search criteria, show all trains
+      // If no search criteria, show all buses
       if (!searchParams.source && !searchParams.destination) {
-        setFilteredTrains(trains);
+        setFilteredBuses(buses);
         return;
       }
 
       // Call backend search API with proper parameter names
       const searchQuery = {
-        sourceStation: searchParams.source || '',
-        destinationStation: searchParams.destination || ''
+        sourceCity: searchParams.source || '',
+        destinationCity: searchParams.destination || ''
       };
 
-      console.log('Searching trains with params:', searchQuery);
-      const response = await trainAPI.searchTrains(searchQuery);
+      console.log('Searching buses with params:', searchQuery);
+      const response = await busesAPI.searchBuses(searchQuery);
       console.log('Full API response:', response);
       
-      // Backend returns data in response.data.trains
-      const searchResults = Array.isArray(response.data?.trains) ? response.data.trains : [];
+      // Backend returns data in response.data.buses or response.data
+      const searchResults = Array.isArray(response.data?.buses) ? response.data.buses : 
+                           Array.isArray(response.data) ? response.data : [];
       
       console.log('Search results:', searchResults);
-      setFilteredTrains(searchResults);
+      setFilteredBuses(searchResults);
       
     } catch (error) {
-      console.error('Error searching trains:', error);
+      console.error('Error searching buses:', error);
       
       // Fallback to local filtering if API fails
-      if (Array.isArray(trains)) {
-        const filtered = trains.filter(train => {
+      if (Array.isArray(buses)) {
+        const filtered = buses.filter(bus => {
           let matches = true;
           
-          // Filter by source station
+          // Filter by source city
           if (searchParams.source) {
-            matches = matches && train.sourceStation.toLowerCase().includes(searchParams.source.toLowerCase());
+            matches = matches && bus.sourceCity.toLowerCase().includes(searchParams.source.toLowerCase());
           }
           
-          // Filter by destination station
+          // Filter by destination city
           if (searchParams.destination) {
-            matches = matches && train.destinationStation.toLowerCase().includes(searchParams.destination.toLowerCase());
+            matches = matches && bus.destinationCity.toLowerCase().includes(searchParams.destination.toLowerCase());
           }
-          
           
           // Filter by available seats
-          matches = matches && train.availableSeats >= searchParams.passengers;
+          matches = matches && bus.availableSeats >= searchParams.passengers;
           
           return matches;
         });
-        
-        setFilteredTrains(filtered);
-      } else {
-        setFilteredTrains([]);
+
+        setFilteredBuses(filtered);
       }
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleBookTrain = async (train) => {
+  const handleBookBus = async (bus) => {
     if (!user) {
       navigate('/login');
       return;
     }
 
     // Navigate directly to seat selection page
-    navigate('/train-booking/seats', { 
+    navigate('/buses/seats', { 
       state: { 
-        train: train,
+        bus: bus,
         passengers: searchParams.passengers 
       } 
     });
@@ -211,15 +212,15 @@ const TrainBooking = () => {
     try {
       setIsBooking(true);
       const bookingData = {
-        train: { id: selectedTrain.id },
+        bus: { id: selectedBus.id },
         passengerName: bookingForm.passengers[0].name, // Use first passenger as primary
         passengerEmail: bookingForm.contactEmail,
         passengerPhone: bookingForm.contactPhone,
         numberOfSeats: bookingForm.numberOfSeats,
-        totalAmount: selectedTrain.price * bookingForm.numberOfSeats
+        totalAmount: selectedBus.price * bookingForm.numberOfSeats
       };
 
-      const response = await bookingsAPI.bookTrain(bookingData);
+      const response = await busBookingsAPI.bookBus(bookingData);
       
       if (response.data && response.data.booking) {
         // Download PDF ticket automatically
@@ -227,22 +228,22 @@ const TrainBooking = () => {
         
         // Set booking details for success modal
         setBookingDetails({
-          trainName: selectedTrain.trainName,
-          sourceStation: selectedTrain.sourceStation,
-          destinationStation: selectedTrain.destinationStation,
+          busName: selectedBus.busName,
+          sourceCity: selectedBus.sourceCity,
+          destinationCity: selectedBus.destinationCity,
           numberOfSeats: bookingForm.numberOfSeats,
-          totalAmount: selectedTrain.price * bookingForm.numberOfSeats,
+          totalAmount: selectedBus.price * bookingForm.numberOfSeats,
           bookingId: response.data.booking.id,
           bookingReference: response.data.bookingReference
         });
         
-        setSelectedTrain(null);
+        setSelectedBus(null);
         setShowSuccess(true);
-        // Reload trains to update availability
-        loadTrains();
+        // Reload buses to update availability
+        loadBuses();
       }
     } catch (error) {
-      console.error('Error booking train:', error);
+      console.error('Error booking bus:', error);
       alert('Booking failed. Please try again.');
     } finally {
       setIsBooking(false);
@@ -292,14 +293,14 @@ const TrainBooking = () => {
 
   const downloadTicket = async (bookingId) => {
     try {
-      const response = await bookingsAPI.downloadTicket(bookingId);
+      const response = await busBookingsAPI.downloadTicket(bookingId);
       
       // Create blob and download
       const blob = new Blob([response.data], { type: 'application/pdf' });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `train-ticket-${bookingId}.pdf`;
+      link.download = `bus-ticket-${bookingId}.pdf`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -324,15 +325,15 @@ const TrainBooking = () => {
     });
   };
 
-  const getTrainClassColor = (trainClass) => {
-    switch (trainClass) {
-      case 'FIRST_AC':
+  const getBusTypeColor = (busType) => {
+    switch (busType) {
+      case 'VOLVO_AC':
         return 'bg-purple-100 text-purple-800';
-      case 'SECOND_AC':
+      case 'AC_SLEEPER':
         return 'bg-blue-100 text-blue-800';
-      case 'THIRD_AC':
+      case 'AC_SEATER':
         return 'bg-green-100 text-green-800';
-      case 'SLEEPER':
+      case 'NON_AC_SLEEPER':
         return 'bg-orange-100 text-orange-800';
       default:
         return 'bg-gray-100 text-gray-800';
@@ -341,7 +342,7 @@ const TrainBooking = () => {
 
   if (!user) {
     return null;
-  }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -350,9 +351,9 @@ const TrainBooking = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Train Booking</h1>
+              <h1 className="text-3xl font-bold text-gray-900">Bus Booking</h1>
               <p className="text-gray-600 mt-1">
-                Find and book your train tickets
+                Find and book your bus tickets
               </p>
             </div>
             <Button 
@@ -369,7 +370,7 @@ const TrainBooking = () => {
         {/* Search Form */}
         <Card className="mb-8">
           <div className="p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Search Trains (Optional)</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Search Buses (Optional)</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -379,7 +380,7 @@ const TrainBooking = () => {
                   type="text"
                   value={searchParams.source}
                   onChange={(e) => setSearchParams({...searchParams, source: e.target.value})}
-                  placeholder="Source station"
+                  placeholder="Source city"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
@@ -391,7 +392,7 @@ const TrainBooking = () => {
                   type="text"
                   value={searchParams.destination}
                   onChange={(e) => setSearchParams({...searchParams, destination: e.target.value})}
-                  placeholder="Destination station"
+                  placeholder="Destination city"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
@@ -409,6 +410,7 @@ const TrainBooking = () => {
                   ))}
                 </select>
               </div>
+              <div></div> {/* Empty column for spacing */}
               <div className="flex items-end space-x-2">
                 <Button 
                   onClick={handleSearch}
@@ -434,7 +436,7 @@ const TrainBooking = () => {
                       destination: '',
                       passengers: 1
                     });
-                    setFilteredTrains(trains);
+                    setFilteredBuses(buses);
                   }}
                   variant="outline"
                   className="px-4"
@@ -446,21 +448,11 @@ const TrainBooking = () => {
           </div>
         </Card>
 
-        {/* Results Header */}
-        {Array.isArray(filteredTrains) && filteredTrains.length > 0 && (
-          <div className="mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">
-              {filteredTrains.length} train{filteredTrains.length > 1 ? 's' : ''} found
-              {(searchParams.source || searchParams.destination) && ' for your search'}
-            </h3>
-          </div>
-        )}
-
         {/* Results */}
         <div className="space-y-6">
-          {Array.isArray(filteredTrains) && filteredTrains.length > 0 ? (
-            filteredTrains.map((train) => (
-              <Card key={train.id} className="hover:shadow-md transition-shadow">
+          {Array.isArray(filteredBuses) && filteredBuses.length > 0 ? (
+            filteredBuses.map((bus) => (
+              <Card key={bus.id} className="hover:shadow-md transition-shadow">
                 <div className="p-6">
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center space-x-4">
@@ -469,13 +461,13 @@ const TrainBooking = () => {
                       </div>
                       <div>
                         <h3 className="text-xl font-semibold text-gray-900">
-                          {train.trainName}
+                          {bus.busName}
                         </h3>
-                        <p className="text-sm text-gray-600">{train.trainNumber}</p>
+                        <p className="text-sm text-gray-600">{bus.busNumber} • {bus.operatorName}</p>
                       </div>
                     </div>
-                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${getTrainClassColor(train.trainClass)}`}>
-                      {train.trainClass.replace('_', ' ')}
+                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${getBusTypeColor(bus.busType)}`}>
+                      {bus.busType.replace(/_/g, ' ')}
                     </span>
                   </div>
 
@@ -483,28 +475,28 @@ const TrainBooking = () => {
                     <div className="flex items-center text-sm text-gray-600">
                       <MapPinIcon className="h-4 w-4 mr-2" />
                       <div>
-                        <p className="font-medium">{train.sourceStation}</p>
+                        <p className="font-medium">{bus.sourceCity}</p>
                         <p className="text-xs text-gray-500">Source</p>
                       </div>
                     </div>
                     <div className="flex items-center text-sm text-gray-600">
                       <MapPinIcon className="h-4 w-4 mr-2" />
                       <div>
-                        <p className="font-medium">{train.destinationStation}</p>
+                        <p className="font-medium">{bus.destinationCity}</p>
                         <p className="text-xs text-gray-500">Destination</p>
                       </div>
                     </div>
                     <div className="flex items-center text-sm text-gray-600">
                       <ClockIcon className="h-4 w-4 mr-2" />
                       <div>
-                        <p className="font-medium">{formatTime(train.departureTime)}</p>
+                        <p className="font-medium">{formatTime(bus.departureTime)}</p>
                         <p className="text-xs text-gray-500">Departure</p>
                       </div>
                     </div>
                     <div className="flex items-center text-sm text-gray-600">
                       <ClockIcon className="h-4 w-4 mr-2" />
                       <div>
-                        <p className="font-medium">{formatTime(train.arrivalTime)}</p>
+                        <p className="font-medium">{formatTime(bus.arrivalTime)}</p>
                         <p className="text-xs text-gray-500">Arrival</p>
                       </div>
                     </div>
@@ -514,18 +506,18 @@ const TrainBooking = () => {
                     <div className="flex items-center space-x-6">
                       <div className="flex items-center text-sm text-gray-600">
                         <UserGroupIcon className="h-4 w-4 mr-2" />
-                        <span>{train.availableSeats} seats available</span>
+                        <span>{bus.availableSeats} seats available</span>
                       </div>
                       <div className="flex items-center text-sm text-gray-600">
                         <CurrencyRupeeIcon className="h-4 w-4 mr-2" />
-                        <span className="text-lg font-semibold text-gray-900">₹{train.price}</span>
+                        <span className="text-lg font-semibold text-gray-900">₹{bus.price}</span>
                         <span className="text-xs text-gray-500 ml-1">per seat</span>
                       </div>
                     </div>
                     <Button 
                       variant="primary"
-                      onClick={() => handleBookTrain(train)}
-                      disabled={train.availableSeats < searchParams.passengers}
+                      onClick={() => handleBookBus(bus)}
+                      disabled={bus.availableSeats < searchParams.passengers}
                     >
                       Book Now
                     </Button>
@@ -537,33 +529,10 @@ const TrainBooking = () => {
             <Card>
               <div className="p-8 text-center">
                 <TruckIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  {searchParams.source || searchParams.destination 
-                    ? 'No trains found for your search' 
-                    : 'No trains available'
-                  }
-                </h3>
-                <p className="text-gray-600 mb-4">
-                  {searchParams.source || searchParams.destination 
-                    ? 'Try adjusting your search criteria or search for different routes.'
-                    : 'Check back later for available train routes.'
-                  }
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No buses found</h3>
+                <p className="text-gray-600">
+                  Try adjusting your search criteria or search for different dates.
                 </p>
-                {(searchParams.source || searchParams.destination) && (
-                  <Button 
-                    variant="outline" 
-                    onClick={() => {
-                      setSearchParams({
-                        source: '',
-                        destination: '',
-                        passengers: 1
-                      });
-                      setFilteredTrains(trains);
-                    }}
-                  >
-                    Clear Search
-                  </Button>
-                )}
               </div>
             </Card>
           )}
@@ -571,32 +540,32 @@ const TrainBooking = () => {
       </div>
 
       {/* Booking Modal */}
-      {selectedTrain && (
+      {selectedBus && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-semibold text-gray-900">Book Train Ticket</h3>
+                <h3 className="text-xl font-semibold text-gray-900">Book Bus Ticket</h3>
                 <button
-                  onClick={() => setSelectedTrain(null)}
+                  onClick={() => setSelectedBus(null)}
                   className="text-gray-400 hover:text-gray-600"
                 >
                   <XMarkIcon className="h-6 w-6" />
                 </button>
               </div>
 
-              {/* Train Details */}
+              {/* Bus Details */}
               <div className="bg-gray-50 p-4 rounded-lg mb-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h4 className="font-semibold text-gray-900">{selectedTrain.trainName}</h4>
-                    <p className="text-sm text-gray-600">{selectedTrain.trainNumber} • {selectedTrain.trainClass.replace('_', ' ')}</p>
+                    <h4 className="font-semibold text-gray-900">{selectedBus.busName}</h4>
+                    <p className="text-sm text-gray-600">{selectedBus.busNumber} • {selectedBus.busType.replace(/_/g, ' ')}</p>
                     <p className="text-sm text-gray-600">
-                      {selectedTrain.sourceStation} → {selectedTrain.destinationStation}
+                      {selectedBus.sourceCity} → {selectedBus.destinationCity}
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="text-lg font-semibold text-gray-900">₹{selectedTrain.price}</p>
+                    <p className="text-lg font-semibold text-gray-900">₹{selectedBus.price}</p>
                     <p className="text-sm text-gray-600">per seat</p>
                   </div>
                 </div>
@@ -742,11 +711,11 @@ const TrainBooking = () => {
                     <div>
                       <p className="text-sm text-gray-600">Total Amount</p>
                       <p className="text-xs text-gray-500">
-                        {bookingForm.numberOfSeats} seat{bookingForm.numberOfSeats > 1 ? 's' : ''} × ₹{selectedTrain.price}
+                        {bookingForm.numberOfSeats} seat{bookingForm.numberOfSeats > 1 ? 's' : ''} × ₹{selectedBus.price}
                       </p>
                     </div>
                     <span className="text-2xl font-bold text-blue-600">
-                      ₹{selectedTrain.price * bookingForm.numberOfSeats}
+                      ₹{selectedBus.price * bookingForm.numberOfSeats}
                     </span>
                   </div>
                 </div>
@@ -755,7 +724,7 @@ const TrainBooking = () => {
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => setSelectedTrain(null)}
+                    onClick={() => setSelectedBus(null)}
                     className="flex-1"
                   >
                     Cancel
@@ -792,4 +761,4 @@ const TrainBooking = () => {
   );
 };
 
-export default TrainBooking;
+export default BusBooking;

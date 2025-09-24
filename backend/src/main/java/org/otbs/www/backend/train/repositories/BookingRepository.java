@@ -18,6 +18,14 @@ public interface BookingRepository extends JpaRepository<Booking, Integer> {
     // Find bookings by user
     List<Booking> findByUserOrderByBookingDateDesc(Users user);
     
+    // Find bookings by user with train data eagerly loaded
+    @Query("SELECT b FROM Booking b JOIN FETCH b.train WHERE b.user = :user ORDER BY b.bookingDate DESC")
+    List<Booking> findByUserWithTrainOrderByBookingDateDesc(@Param("user") Users user);
+    
+    // Find all bookings with train data eagerly loaded (for admin/vendor)
+    @Query("SELECT b FROM Booking b JOIN FETCH b.train ORDER BY b.bookingDate DESC")
+    List<Booking> findAllWithTrainOrderByBookingDateDesc();
+    
     // Find bookings by train
     List<Booking> findByTrainOrderByBookingDateDesc(Train train);
     
