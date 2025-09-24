@@ -5,8 +5,11 @@ import java.util.Map;
 import org.otbs.www.backend.bus.models.BusBooking;
 import org.otbs.www.backend.bus.services.BusBookingService;
 import org.otbs.www.backend.models.Users;
+import org.otbs.www.backend.services.PdfService;
 import org.otbs.www.backend.util.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -26,6 +29,9 @@ public class BusBookingController {
 
     @Autowired
     private BusBookingService busBookingService;
+
+    @Autowired
+    private PdfService pdfService;
 
     @Autowired
     private JwtUtil jwtUtil;
@@ -113,6 +119,49 @@ public class BusBookingController {
             return busBookingService.getUserActiveBookings(user.getId());
         } catch (Exception e) {
             return ResponseEntity.status(401).body(Map.of("message", "Invalid or expired token"));
+        }
+    }
+
+    /**
+     * Download ticket as PDF
+     * GET /api/bus-bookings/{bookingId}/download
+     */
+    @GetMapping("/{bookingId}/download")
+    public ResponseEntity<byte[]> downloadTicket(@PathVariable Integer bookingId,
+                                               @RequestHeader("Authorization") String token) {
+        try {
+            Users user = jwtUtil.getUserFromToken(token);
+            
+            // Get the booking directly from service
+            BusBooking booking = busBookingService.getBookingEntityById(bookingId);
+            
+            // Check if booking exists
+            if (booking == null) {
+                return ResponseEntity.notFound().build();
+            }
+            
+            // Verify booking belongs to user
+            if (!booking.getUser().getId().equals(user.getId())) {
+                return ResponseEntity.status(403).build();
+            }
+            
+            // Generate PDF
+            byte[] pdfData = pdfService.generateBusTicket(booking);
+            
+            // Set appropriate headers for PDF download
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_PDF);
+            headers.setContentDispositionFormData("attachment", 
+                "bus-ticket-" + booking.getBookingReference() + ".pdf");
+            headers.setContentLength(pdfData.length);
+            
+            return ResponseEntity.ok()
+                    .headers(headers)
+                    .body(pdfData);
+                    
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).build();
         }
     }
 

@@ -3,6 +3,7 @@ package org.otbs.www.backend.bus.models;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -23,6 +24,7 @@ import jakarta.validation.constraints.Size;
 
 @Entity
 @Table(name = "buses")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Bus {
 
     @Id

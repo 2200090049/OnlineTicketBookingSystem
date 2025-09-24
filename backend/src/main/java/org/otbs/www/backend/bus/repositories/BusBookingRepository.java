@@ -19,6 +19,10 @@ public interface BusBookingRepository extends JpaRepository<BusBooking, Integer>
     // Find bookings by user
     List<BusBooking> findByUserOrderByBookingDateDesc(Users user);
     
+    // Find bookings by user with EAGER loading
+    @Query("SELECT b FROM BusBooking b JOIN FETCH b.bus JOIN FETCH b.user WHERE b.user = :user ORDER BY b.bookingDate DESC")
+    List<BusBooking> findByUserWithBusAndUserOrderByBookingDateDesc(@Param("user") Users user);
+    
     // Find bookings by bus
     List<BusBooking> findByBusOrderByBookingDateDesc(Bus bus);
     
@@ -30,6 +34,10 @@ public interface BusBookingRepository extends JpaRepository<BusBooking, Integer>
     
     // Find bookings by user and status
     List<BusBooking> findByUserAndStatusOrderByBookingDateDesc(Users user, BusBooking.BookingStatus status);
+    
+    // Find bookings by user and status with EAGER loading
+    @Query("SELECT b FROM BusBooking b JOIN FETCH b.bus JOIN FETCH b.user WHERE b.user = :user AND b.status = :status ORDER BY b.bookingDate DESC")
+    List<BusBooking> findByUserAndStatusWithBusAndUserOrderByBookingDateDesc(@Param("user") Users user, @Param("status") BusBooking.BookingStatus status);
     
     // Find bookings by bus and status
     List<BusBooking> findByBusAndStatusOrderByBookingDateDesc(Bus bus, BusBooking.BookingStatus status);

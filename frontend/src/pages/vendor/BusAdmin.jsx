@@ -255,13 +255,23 @@ const BusAdmin = () => {
               <h1 className="text-3xl font-bold text-gray-900">Bus Management</h1>
               <p className="text-gray-600 mt-1">Manage your bus fleet and schedules</p>
             </div>
-            <Button
-              onClick={() => setShowAddBus(true)}
-              className="flex items-center space-x-2"
-            >
-              <PlusIcon className="h-5 w-5" />
-              <span>Add New Bus</span>
-            </Button>
+            <div className="flex space-x-3">
+              <Button
+                onClick={() => navigate('/vendor/bus-bookings')}
+                variant="outline"
+                className="flex items-center space-x-2 bg-green-50 border-green-200 hover:bg-green-100 text-green-700"
+              >
+                <ClockIcon className="h-5 w-5" />
+                <span>Manage Bookings</span>
+              </Button>
+              <Button
+                onClick={() => setShowAddBus(true)}
+                className="flex items-center space-x-2"
+              >
+                <PlusIcon className="h-5 w-5" />
+                <span>Add New Bus</span>
+              </Button>
+            </div>
           </div>
         </div>
       </div>

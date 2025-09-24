@@ -6,6 +6,8 @@ import java.time.format.DateTimeFormatter;
 
 import org.otbs.www.backend.train.models.Booking;
 import org.otbs.www.backend.train.models.Train;
+import org.otbs.www.backend.bus.models.Bus;
+import org.otbs.www.backend.bus.models.BusBooking;
 import org.springframework.stereotype.Service;
 
 import com.itextpdf.text.BaseColor;
@@ -50,6 +52,32 @@ public class PdfService {
         
         // Add footer
         addFooter(document);
+        
+        document.close();
+        return outputStream.toByteArray();
+    }
+
+    public byte[] generateBusTicket(BusBooking booking) throws DocumentException, IOException {
+        Document document = new Document(PageSize.A4, 20, 20, 20, 20);
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        PdfWriter.getInstance(document, outputStream);
+        
+        document.open();
+        
+        // Add header
+        addBusHeader(document, booking);
+        
+        // Add booking details
+        addBusBookingDetails(document, booking);
+        
+        // Add bus details
+        addBusDetails(document, booking);
+        
+        // Add passenger details
+        addBusPassengerDetails(document, booking);
+        
+        // Add footer
+        addBusFooter(document);
         
         document.close();
         return outputStream.toByteArray();
@@ -215,5 +243,142 @@ public class PdfService {
         cell.setPadding(8);
         cell.setHorizontalAlignment(Element.ALIGN_LEFT);
         table.addCell(cell);
+    }
+
+    // Bus ticket generation helper methods
+    private void addBusHeader(Document document, BusBooking booking) throws DocumentException {
+        // Title
+        Paragraph title = new Paragraph("BUS TICKET", TITLE_FONT);
+        title.setAlignment(Element.ALIGN_CENTER);
+        title.setSpacingAfter(20);
+        document.add(title);
+
+        // Booking reference
+        Paragraph ref = new Paragraph("Booking Reference: " + booking.getBookingReference(), HEADER_FONT);
+        ref.setAlignment(Element.ALIGN_CENTER);
+        ref.setSpacingAfter(10);
+        document.add(ref);
+
+        // Status
+        Paragraph status = new Paragraph("Status: " + booking.getStatus().toString(), NORMAL_FONT);
+        status.setAlignment(Element.ALIGN_CENTER);
+        status.setSpacingAfter(20);
+        document.add(status);
+
+        // Line separator
+        document.add(new Paragraph("________________________________________________"));
+        document.add(new Paragraph(" "));
+    }
+
+    private void addBusBookingDetails(Document document, BusBooking booking) throws DocumentException {
+        PdfPTable table = new PdfPTable(2);
+        table.setWidthPercentage(100);
+        table.setSpacingAfter(20);
+
+        // Booking date
+        addTableRow(table, "Booking Date", 
+            booking.getBookingDate().format(DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm")), 
+            HEADER_FONT, NORMAL_FONT);
+        
+        // Total amount
+        addTableRow(table, "Total Amount", "₹" + booking.getTotalAmount(), 
+            HEADER_FONT, NORMAL_FONT);
+        
+        // Number of seats
+        addTableRow(table, "Number of Seats", booking.getNumberOfSeats().toString(), 
+            HEADER_FONT, NORMAL_FONT);
+
+        document.add(table);
+    }
+
+    private void addBusDetails(Document document, BusBooking booking) throws DocumentException {
+        Bus bus = booking.getBus();
+        
+        if (bus == null) {
+            throw new DocumentException("Bus information is missing from booking");
+        }
+        
+        Paragraph busHeader = new Paragraph("BUS DETAILS", HEADER_FONT);
+        busHeader.setSpacingBefore(20);
+        busHeader.setSpacingAfter(10);
+        document.add(busHeader);
+
+        PdfPTable table = new PdfPTable(2);
+        table.setWidthPercentage(100);
+        table.setSpacingAfter(20);
+
+        addTableRow(table, "Bus Name", bus.getBusName() != null ? bus.getBusName() : "N/A", HEADER_FONT, NORMAL_FONT);
+        addTableRow(table, "Bus Number", bus.getBusNumber() != null ? bus.getBusNumber() : "N/A", HEADER_FONT, NORMAL_FONT);
+        addTableRow(table, "Operator", bus.getOperatorName() != null ? bus.getOperatorName() : "N/A", HEADER_FONT, NORMAL_FONT);
+        addTableRow(table, "Bus Type", bus.getBusType() != null ? bus.getBusType().getDisplayName() : "N/A", HEADER_FONT, NORMAL_FONT);
+        addTableRow(table, "From", bus.getSourceCity() != null ? bus.getSourceCity() : "N/A", HEADER_FONT, NORMAL_FONT);
+        addTableRow(table, "To", bus.getDestinationCity() != null ? bus.getDestinationCity() : "N/A", HEADER_FONT, NORMAL_FONT);
+        addTableRow(table, "Departure", 
+            bus.getDepartureTime() != null ? bus.getDepartureTime().format(DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm")) : "N/A", 
+            HEADER_FONT, NORMAL_FONT);
+        addTableRow(table, "Arrival", 
+            bus.getArrivalTime() != null ? bus.getArrivalTime().format(DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm")) : "N/A", 
+            HEADER_FONT, NORMAL_FONT);
+        addTableRow(table, "Price per Seat", bus.getPrice() != null ? "₹" + bus.getPrice() : "N/A", HEADER_FONT, NORMAL_FONT);
+
+        document.add(table);
+    }
+
+    private void addBusPassengerDetails(Document document, BusBooking booking) throws DocumentException {
+        Paragraph passengerHeader = new Paragraph("PASSENGER DETAILS", HEADER_FONT);
+        passengerHeader.setSpacingBefore(20);
+        passengerHeader.setSpacingAfter(10);
+        document.add(passengerHeader);
+
+        PdfPTable table = new PdfPTable(3);
+        table.setWidthPercentage(100);
+        table.setSpacingAfter(20);
+
+        // Header row
+        addTableHeader(table, "Passenger Name", HEADER_FONT);
+        addTableHeader(table, "Email", HEADER_FONT);
+        addTableHeader(table, "Phone", HEADER_FONT);
+
+        // Passenger data row
+        addTableData(table, booking.getPassengerName(), NORMAL_FONT);
+        addTableData(table, booking.getPassengerEmail(), NORMAL_FONT);
+        addTableData(table, booking.getPassengerPhone(), NORMAL_FONT);
+
+        document.add(table);
+    }
+
+    private void addBusFooter(Document document) throws DocumentException {
+        Paragraph footer = new Paragraph();
+        footer.setSpacingBefore(30);
+        
+        // Terms and conditions
+        Paragraph terms = new Paragraph("IMPORTANT TERMS & CONDITIONS:", HEADER_FONT);
+        terms.setSpacingAfter(10);
+        footer.add(terms);
+        
+        String[] termsText = {
+            "• Please arrive at the boarding point at least 15 minutes before departure time.",
+            "• This ticket is non-transferable and valid only for the passenger named above.",
+            "• Cancellation is allowed up to 2 hours before departure.",
+            "• Please carry a valid ID proof along with this ticket.",
+            "• For any queries, contact our customer support."
+        };
+        
+        for (String term : termsText) {
+            Paragraph termPara = new Paragraph(term, SMALL_FONT);
+            termPara.setSpacingAfter(5);
+            footer.add(termPara);
+        }
+        
+        // Company info
+        Paragraph companyInfo = new Paragraph();
+        companyInfo.setSpacingBefore(20);
+        companyInfo.add(new Paragraph("Online Ticket Booking System", NORMAL_FONT));
+        companyInfo.add(new Paragraph("Customer Support: +91-1234567890", SMALL_FONT));
+        companyInfo.add(new Paragraph("Email: support@otbs.com", SMALL_FONT));
+        companyInfo.setAlignment(Element.ALIGN_CENTER);
+        
+        footer.add(companyInfo);
+        document.add(footer);
     }
 }

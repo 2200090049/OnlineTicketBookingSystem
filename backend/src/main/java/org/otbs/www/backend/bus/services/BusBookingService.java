@@ -2,6 +2,7 @@ package org.otbs.www.backend.bus.services;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,6 +17,7 @@ import org.otbs.www.backend.bus.repositories.BusBookingRepository;
 import org.otbs.www.backend.bus.repositories.BusRepository;
 import org.otbs.www.backend.models.Users;
 import org.otbs.www.backend.repositories.UserRepo;
+import org.otbs.www.backend.services.EmailService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -37,6 +39,9 @@ public class BusBookingService {
 
     @Autowired
     private UserRepo userRepository;
+
+    @Autowired
+    private EmailService emailService;
 
     @Autowired
     private Validator validator;
@@ -114,6 +119,11 @@ public class BusBookingService {
             booking.setStatus(BusBooking.BookingStatus.CONFIRMED);
             booking.setBookingReference(generateBookingReference());
 
+            // Auto-generate seat numbers if not provided
+            if (booking.getSeatNumbers() == null || booking.getSeatNumbers().trim().isEmpty()) {
+                booking.setSeatNumbers(generateSeatNumbers(booking.getNumberOfSeats()));
+            }
+
             // Calculate total amount
             BigDecimal totalAmount = bus.getPrice().multiply(new BigDecimal(booking.getNumberOfSeats()));
             booking.setTotalAmount(totalAmount);
@@ -124,6 +134,27 @@ public class BusBookingService {
             // Update available seats
             bus.setAvailableSeats(bus.getAvailableSeats() - booking.getNumberOfSeats());
             busRepository.save(bus);
+
+            // Send booking confirmation email
+            try {
+                emailService.sendBusBookingConfirmation(
+                    savedBooking.getPassengerEmail(),
+                    savedBooking.getPassengerName(),
+                    savedBooking.getBookingReference(),
+                    bus.getBusName(),
+                    bus.getBusNumber(),
+                    bus.getOperatorName(),
+                    bus.getSourceCity(),
+                    bus.getDestinationCity(),
+                    bus.getDepartureTime().format(DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm")),
+                    bus.getArrivalTime().format(DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm")),
+                    savedBooking.getNumberOfSeats(),
+                    "₹" + savedBooking.getTotalAmount()
+                );
+            } catch (Exception emailError) {
+                System.err.println("Failed to send booking confirmation email: " + emailError.getMessage());
+                // Don't fail the booking if email fails
+            }
 
             response.put("message", "Booking created successfully");
             response.put("booking", savedBooking);
@@ -516,6 +547,20 @@ public class BusBookingService {
     }
 
     /**
+     * Generate simple seat numbers when not provided by frontend
+     */
+    private String generateSeatNumbers(Integer numberOfSeats) {
+        StringBuilder seatNumbers = new StringBuilder();
+        for (int i = 1; i <= numberOfSeats; i++) {
+            if (i > 1) {
+                seatNumbers.append(",");
+            }
+            seatNumbers.append("\"").append(i).append("\"");
+        }
+        return "[" + seatNumbers.toString() + "]";
+    }
+
+    /**
      * Validate booking before creating
      */
     private boolean validateBookingData(BusBooking booking, Map<String, Object> response) {
@@ -536,5 +581,13 @@ public class BusBookingService {
         }
 
         return true;
+    }
+
+    /**
+     * Helper method to get booking entity by ID for PDF generation
+     */
+    public BusBooking getBookingEntityById(Integer bookingId) {
+        Optional<BusBooking> bookingOpt = busBookingRepository.findById(bookingId);
+        return bookingOpt.orElse(null);
     }
 }

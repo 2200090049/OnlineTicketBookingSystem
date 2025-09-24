@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 
 import org.otbs.www.backend.models.Users;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -36,14 +37,16 @@ public class BusBooking {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "bus_id", nullable = false)
     @NotNull(message = "Bus is required")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private Bus bus;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "user_id", nullable = false)
     @NotNull(message = "User is required")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private Users user;
 
     @NotBlank(message = "Passenger name is required")
@@ -71,7 +74,7 @@ public class BusBooking {
     @Max(value = 6, message = "Cannot book more than 6 seats at once")
     private Integer numberOfSeats;
 
-    @NotBlank(message = "Seat numbers are required")
+    // Optional field - can be null/empty for now, will be implemented later
     @Size(max = 200, message = "Seat numbers cannot exceed 200 characters")
     private String seatNumbers; // JSON array of seat numbers like ["1A", "1B", "2A"]
 

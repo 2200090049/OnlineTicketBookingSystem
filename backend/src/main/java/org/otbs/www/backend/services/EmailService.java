@@ -336,4 +336,85 @@ public class EmailService {
             """, passengerName, bookingReference, trainName, trainNumber, sourceStation, 
             destinationStation, departureTime, arrivalTime, numberOfSeats, totalAmount, appName, appName);
     }
+
+    /**
+     * Send bus booking confirmation email
+     */
+    public void sendBusBookingConfirmation(String toEmail, String passengerName, String bookingReference, 
+                                         String busName, String busNumber, String operatorName, 
+                                         String sourceCity, String destinationCity, String departureTime, 
+                                         String arrivalTime, int numberOfSeats, String totalAmount) {
+        try {
+            // Log booking confirmation email to console for development
+            System.out.println("=== BUS BOOKING CONFIRMATION EMAIL ===");
+            System.out.println("To: " + toEmail);
+            System.out.println("Subject: Bus Booking Confirmed - " + appName);
+            System.out.println("Booking Reference: " + bookingReference);
+            System.out.println("========================================");
+
+            try {
+                SimpleMailMessage message = new SimpleMailMessage();
+                message.setFrom(fromEmail);
+                message.setTo(toEmail);
+                message.setSubject("Bus Booking Confirmed - " + appName);
+                message.setText(buildBusBookingConfirmationEmailBody(passengerName, bookingReference, 
+                    busName, busNumber, operatorName, sourceCity, destinationCity, departureTime, 
+                    arrivalTime, numberOfSeats, totalAmount));
+                
+                mailSender.send(message);
+                System.out.println("✅ Bus booking confirmation email sent successfully to: " + toEmail);
+            } catch (Exception emailError) {
+                System.err.println("❌ Failed to send bus booking confirmation email, but logged above: " + emailError.getMessage());
+            }
+            
+        } catch (Exception e) {
+            System.err.println("Failed to send bus booking confirmation email: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Build email body for bus booking confirmation
+     */
+    private String buildBusBookingConfirmationEmailBody(String passengerName, String bookingReference,
+                                                       String busName, String busNumber, String operatorName,
+                                                       String sourceCity, String destinationCity, 
+                                                       String departureTime, String arrivalTime,
+                                                       int numberOfSeats, String totalAmount) {
+        return String.format("""
+            Dear %s,
+            
+            Your bus booking has been confirmed! Here are your booking details:
+            
+            BOOKING DETAILS:
+            ===============
+            Booking Reference: %s
+            Bus: %s (%s)
+            Operator: %s
+            Route: %s → %s
+            Departure: %s
+            Arrival: %s
+            Number of Seats: %d
+            Total Amount: %s
+            
+            IMPORTANT INFORMATION:
+            =====================
+            • Your ticket has been attached to this email as a PDF.
+            • Please arrive at the boarding point at least 15 minutes before departure.
+            • Carry a valid ID proof along with your ticket.
+            • You can download your ticket anytime from your booking history.
+            
+            CANCELLATION POLICY:
+            ===================
+            • Cancellation is allowed up to 2 hours before departure.
+            • Refunds will be processed within 3-5 business days.
+            
+            Thank you for choosing %s for your travel needs!
+            
+            Safe travels!
+            
+            Best regards,
+            %s Team
+            """, passengerName, bookingReference, busName, busNumber, operatorName, sourceCity, 
+            destinationCity, departureTime, arrivalTime, numberOfSeats, totalAmount, appName, appName);
+    }
 }
