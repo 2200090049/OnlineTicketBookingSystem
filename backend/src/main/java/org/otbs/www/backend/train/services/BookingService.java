@@ -327,11 +327,46 @@ public class BookingService {
      * Get all bookings (Admin only)
      */
     public ResponseEntity<Object> getAllBookings() {
-        List<Booking> bookings = bookingRepository.findAll();
+        List<Booking> bookings = bookingRepository.findAllWithTrainOrderByBookingDateDesc();
+        
+        // Convert to DTOs to avoid lazy loading issues
+        List<Map<String, Object>> bookingDTOs = bookings.stream().map(booking -> {
+            Map<String, Object> bookingDTO = new HashMap<>();
+            bookingDTO.put("id", booking.getId());
+            bookingDTO.put("passengerName", booking.getPassengerName());
+            bookingDTO.put("passengerEmail", booking.getPassengerEmail());
+            bookingDTO.put("passengerPhone", booking.getPassengerPhone());
+            bookingDTO.put("numberOfSeats", booking.getNumberOfSeats());
+            bookingDTO.put("totalAmount", booking.getTotalAmount());
+            bookingDTO.put("status", booking.getStatus().toString());
+            bookingDTO.put("bookingReference", booking.getBookingReference());
+            bookingDTO.put("bookingDate", booking.getBookingDate());
+            bookingDTO.put("updatedAt", booking.getUpdatedAt());
+            
+            // Create train DTO
+            if (booking.getTrain() != null) {
+                Map<String, Object> trainDTO = new HashMap<>();
+                trainDTO.put("id", booking.getTrain().getId());
+                trainDTO.put("trainName", booking.getTrain().getTrainName());
+                trainDTO.put("trainNumber", booking.getTrain().getTrainNumber());
+                trainDTO.put("sourceStation", booking.getTrain().getSourceStation());
+                trainDTO.put("destinationStation", booking.getTrain().getDestinationStation());
+                trainDTO.put("departureTime", booking.getTrain().getDepartureTime());
+                trainDTO.put("arrivalTime", booking.getTrain().getArrivalTime());
+                trainDTO.put("totalSeats", booking.getTrain().getTotalSeats());
+                trainDTO.put("availableSeats", booking.getTrain().getAvailableSeats());
+                trainDTO.put("price", booking.getTrain().getPrice());
+                trainDTO.put("trainClass", booking.getTrain().getTrainClass().toString());
+                trainDTO.put("status", booking.getTrain().getStatus().toString());
+                bookingDTO.put("train", trainDTO);
+            }
+            
+            return bookingDTO;
+        }).collect(Collectors.toList());
         
         Map<String, Object> response = new HashMap<>();
-        response.put("message", "Total bookings: " + bookings.size());
-        response.put("bookings", bookings);
+        response.put("message", "Total bookings: " + bookingDTOs.size());
+        response.put("bookings", bookingDTOs);
         return ResponseEntity.ok(response);
     }
 

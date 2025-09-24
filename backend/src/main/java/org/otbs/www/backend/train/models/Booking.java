@@ -78,7 +78,7 @@ public class Booking {
     
     // Enums
     public enum BookingStatus {
-        CONFIRMED, CANCELLED, REFUNDED
+        CONFIRMED, CANCELLED, REFUNDED, PENDING
     }
     
     // Constructors

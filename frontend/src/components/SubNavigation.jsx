@@ -54,6 +54,12 @@ const SubNavigation = ({ className = '' }) => {
           icon: TruckIcon,
           isVendor: true
         });
+        vendorItems.push({
+          name: 'Train Bookings',
+          path: '/vendor/bookings',
+          icon: TruckIcon,
+          isVendor: true
+        });
         break;
       case 'BUSES_ADMIN':
         vendorItems.push({

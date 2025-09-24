@@ -27,7 +27,6 @@ const TrainBooking = () => {
   const [searchParams, setSearchParams] = useState({
     source: '',
     destination: '',
-    date: '',
     passengers: 1
   });
   const [showFilters, setShowFilters] = useState(false);
@@ -121,46 +120,64 @@ const TrainBooking = () => {
     }
   };
 
-  const handleSearch = () => {
-    // Ensure trains is an array before filtering
-    if (!Array.isArray(trains)) {
-      console.error('Trains is not an array:', trains);
-      return;
+  const handleSearch = async () => {
+    try {
+      setIsLoading(true);
+      
+      // If no search criteria, show all trains
+      if (!searchParams.source && !searchParams.destination) {
+        setFilteredTrains(trains);
+        return;
+      }
+
+      // Call backend search API with proper parameter names
+      const searchQuery = {
+        sourceStation: searchParams.source || '',
+        destinationStation: searchParams.destination || ''
+      };
+
+      console.log('Searching trains with params:', searchQuery);
+      const response = await trainAPI.searchTrains(searchQuery);
+      console.log('Full API response:', response);
+      
+      // Backend returns data in response.data.trains
+      const searchResults = Array.isArray(response.data?.trains) ? response.data.trains : [];
+      
+      console.log('Search results:', searchResults);
+      setFilteredTrains(searchResults);
+      
+    } catch (error) {
+      console.error('Error searching trains:', error);
+      
+      // Fallback to local filtering if API fails
+      if (Array.isArray(trains)) {
+        const filtered = trains.filter(train => {
+          let matches = true;
+          
+          // Filter by source station
+          if (searchParams.source) {
+            matches = matches && train.sourceStation.toLowerCase().includes(searchParams.source.toLowerCase());
+          }
+          
+          // Filter by destination station
+          if (searchParams.destination) {
+            matches = matches && train.destinationStation.toLowerCase().includes(searchParams.destination.toLowerCase());
+          }
+          
+          
+          // Filter by available seats
+          matches = matches && train.availableSeats >= searchParams.passengers;
+          
+          return matches;
+        });
+        
+        setFilteredTrains(filtered);
+      } else {
+        setFilteredTrains([]);
+      }
+    } finally {
+      setIsLoading(false);
     }
-
-    // If no search criteria, show all trains
-    if (!searchParams.source && !searchParams.destination && !searchParams.date) {
-      setFilteredTrains(trains);
-      return;
-    }
-
-    const filtered = trains.filter(train => {
-      let matches = true;
-      
-      // Filter by source station
-      if (searchParams.source) {
-        matches = matches && train.sourceStation.toLowerCase().includes(searchParams.source.toLowerCase());
-      }
-      
-      // Filter by destination station
-      if (searchParams.destination) {
-        matches = matches && train.destinationStation.toLowerCase().includes(searchParams.destination.toLowerCase());
-      }
-      
-      // Filter by date
-      if (searchParams.date) {
-        const trainDate = new Date(train.departureTime).toDateString();
-        const searchDate = new Date(searchParams.date).toDateString();
-        matches = matches && trainDate === searchDate;
-      }
-      
-      // Filter by available seats
-      matches = matches && train.availableSeats >= searchParams.passengers;
-      
-      return matches;
-    });
-
-    setFilteredTrains(filtered);
   };
 
   const handleBookTrain = async (train) => {
@@ -380,17 +397,6 @@ const TrainBooking = () => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Date
-                </label>
-                <input
-                  type="date"
-                  value={searchParams.date}
-                  onChange={(e) => setSearchParams({...searchParams, date: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Passengers
                 </label>
                 <select
@@ -440,6 +446,16 @@ const TrainBooking = () => {
             </div>
           </div>
         </Card>
+
+        {/* Results Header */}
+        {Array.isArray(filteredTrains) && filteredTrains.length > 0 && (
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">
+              {filteredTrains.length} train{filteredTrains.length > 1 ? 's' : ''} found
+              {(searchParams.source || searchParams.destination) && ' for your search'}
+            </h3>
+          </div>
+        )}
 
         {/* Results */}
         <div className="space-y-6">
@@ -522,10 +538,33 @@ const TrainBooking = () => {
             <Card>
               <div className="p-8 text-center">
                 <TruckIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No trains found</h3>
-                <p className="text-gray-600">
-                  Try adjusting your search criteria or search for different dates.
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  {searchParams.source || searchParams.destination 
+                    ? 'No trains found for your search' 
+                    : 'No trains available'
+                  }
+                </h3>
+                <p className="text-gray-600 mb-4">
+                  {searchParams.source || searchParams.destination 
+                    ? 'Try adjusting your search criteria or search for different routes.'
+                    : 'Check back later for available train routes.'
+                  }
                 </p>
+                {(searchParams.source || searchParams.destination) && (
+                  <Button 
+                    variant="outline" 
+                    onClick={() => {
+                      setSearchParams({
+                        source: '',
+                        destination: '',
+                        passengers: 1
+                      });
+                      setFilteredTrains(trains);
+                    }}
+                  >
+                    Clear Search
+                  </Button>
+                )}
               </div>
             </Card>
           )}

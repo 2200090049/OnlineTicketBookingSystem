@@ -179,16 +179,48 @@ public class TrainService {
     // User operations
 
     /**
-     * Search trains by route and date
+     * Search trains by route and date (date is optional)
      */
     public ResponseEntity<Object> searchTrains(String sourceStation, String destinationStation, 
                                              LocalDateTime departureDate) {
-        if (sourceStation == null || destinationStation == null || departureDate == null) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Source, destination, and departure date are required"));
+        if (sourceStation == null || destinationStation == null) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Source and destination are required"));
         }
 
-        List<Train> trains = trainRepository.findAvailableTrainsByRouteAndDate(
-            sourceStation, destinationStation, departureDate, Train.TrainStatus.ACTIVE);
+        List<Train> trains;
+        
+        if (departureDate != null) {
+            // Search with specific date
+            trains = trainRepository.findAvailableTrainsByRouteAndDate(
+                sourceStation, destinationStation, departureDate, Train.TrainStatus.ACTIVE);
+        } else {
+            // First try exact match (case-insensitive)
+            trains = trainRepository.findAvailableTrainsByRouteAndDateRange(
+                sourceStation, destinationStation, 
+                LocalDateTime.now(), // From now
+                LocalDateTime.now().plusYears(1), // Up to 1 year from now
+                Train.TrainStatus.ACTIVE);
+            
+            // If no exact matches found, try fuzzy search
+            if (trains.isEmpty()) {
+                trains = trainRepository.findTrainsByRouteFuzzy(
+                    sourceStation, destinationStation, Train.TrainStatus.ACTIVE);
+            }
+            
+            // If still no matches, try with common misspellings
+            if (trains.isEmpty()) {
+                String correctedSource = correctStationName(sourceStation);
+                String correctedDestination = correctStationName(destinationStation);
+                
+                if (!correctedSource.equals(sourceStation) || !correctedDestination.equals(destinationStation)) {
+                    trains = trainRepository.findAvailableTrainsByRouteAndDateRange(
+                        correctedSource, correctedDestination, 
+                        LocalDateTime.now(), // From now
+                        LocalDateTime.now().plusYears(1), // Up to 1 year from now
+                        Train.TrainStatus.ACTIVE);
+                }
+            }
+        }
 
         Map<String, Object> response = new HashMap<>();
         response.put("message", "Trains found: " + trains.size());
@@ -196,7 +228,7 @@ public class TrainService {
         response.put("searchCriteria", Map.of(
             "sourceStation", sourceStation,
             "destinationStation", destinationStation,
-            "departureDate", departureDate
+            "departureDate", departureDate != null ? departureDate : "All future dates"
         ));
         return ResponseEntity.ok(response);
     }
@@ -366,5 +398,41 @@ public class TrainService {
         response.put("message", "Seats restored successfully");
         response.put("train", savedTrain);
         return ResponseEntity.ok(response);
+    }
+    
+    /**
+     * Correct common misspellings in station names
+     */
+    private String correctStationName(String stationName) {
+        if (stationName == null) return null;
+        
+        String corrected = stationName.toLowerCase().trim();
+        
+        // Common misspellings and corrections
+        switch (corrected) {
+            case "tenai":
+                return "tenali";
+            case "vijaywada":
+            case "vijayawada":
+            case "vijawada":
+                return "vijayawada";
+            case "bengaluru":
+            case "bangalore":
+                return "bengaluru";
+            case "chennai":
+            case "madras":
+                return "chennai";
+            case "mumbai":
+            case "bombay":
+                return "mumbai";
+            case "delhi":
+            case "new delhi":
+                return "delhi";
+            case "assam":
+            case "guwahati":
+                return "assam";
+            default:
+                return stationName; // Return original if no correction needed
+        }
     }
 }
