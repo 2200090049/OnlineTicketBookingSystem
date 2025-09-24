@@ -102,15 +102,10 @@ const SubNavigation = ({ className = '' }) => {
             })}
           </div>
 
-          {/* Right side - Admin button (only for admin users) */}
           {user?.role === 'ADMIN' && (
             <div className="flex items-center space-x-4">
               <Link to="/admin/dashboard">
-                <Button 
-                  variant="primary" 
-                  size="small"
-                  className="flex items-center space-x-2"
-                >
+                <Button variant="outline" className="flex items-center space-x-2">
                   <Cog6ToothIcon className="h-4 w-4" />
                   <span>Admin</span>
                 </Button>

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-// import { userAPI, adminAPI, transportAPI } from '../services/api'; // Uncomment when APIs are ready
+import * as adminAPI from '../services/adminAPI';
 
 // Import our new modular components
 import AdminSidebar from '../components/admin/AdminSidebar';
@@ -46,31 +46,8 @@ const AdminDashboard = () => {
 
   const loadUsers = async () => {
     try {
-      // Replace with actual API call
-      // const response = await userAPI.getAllUsers();
-      // setUsers(response.data.users || []);
-      
-      // Mock data for development
-      setUsers([
-        {
-          id: 1,
-          username: 'john_doe',
-          email: 'john@example.com',
-          phone: '+1234567890',
-          role: 'USER',
-          status: 'active',
-          createdAt: '2024-01-15'
-        },
-        {
-          id: 2,
-          username: 'jane_smith',
-          email: 'jane@example.com',
-          phone: '+1987654321',
-          role: 'USER',
-          status: 'active',
-          createdAt: '2024-01-10'
-        }
-      ]);
+      const response = await adminAPI.getAllUsers();
+      setUsers(response.users || []);
     } catch (error) {
       console.error('Error loading users:', error);
       setUsers([]);
@@ -79,23 +56,8 @@ const AdminDashboard = () => {
 
   const loadVendors = async () => {
     try {
-      // Replace with actual API call
-      // const response = await adminAPI.getAllVendors();
-      // setVendors(response.data.vendors || []);
-      
-      // Mock data for development
-      setVendors([
-        {
-          id: 1,
-          username: 'train_vendor',
-          email: 'vendor@railways.com',
-          phone: '+1122334455',
-          role: 'VENDOR',
-          vendorType: 'TRAIN',
-          status: 'active',
-          createdAt: '2024-01-05'
-        }
-      ]);
+      const response = await adminAPI.getAllVendors();
+      setVendors(response.vendors || []);
     } catch (error) {
       console.error('Error loading vendors:', error);
       setVendors([]);
@@ -240,33 +202,28 @@ const AdminDashboard = () => {
   };
 
   const handleDeleteItem = async (type, id) => {
-    if (!window.confirm('Are you sure you want to delete this item?')) {
+    if (!window.confirm(`Are you sure you want to delete this ${type}?`)) {
       return;
     }
 
     try {
       setIsLoading(true);
-      // Add actual API call here
-      // await api.deleteItem(type, id);
       
-      // Update local state
       switch (type) {
         case 'user':
-          setUsers(prev => prev.filter(u => u.id !== id));
+          await adminAPI.deleteUser(id);
           break;
         case 'vendor':
-          setVendors(prev => prev.filter(v => v.id !== id));
+          await adminAPI.deleteVendor(id);
           break;
-        case 'train':
-          setTrains(prev => prev.filter(t => t.id !== id));
-          break;
-        case 'movie':
-          setMovies(prev => prev.filter(m => m.id !== id));
-          break;
-        case 'bus':
-          setBuses(prev => prev.filter(b => b.id !== id));
-          break;
+        default:
+          // For transport items (trains, movies, buses), we'll implement when those endpoints are ready
+          console.warn('Delete operation not yet implemented for type:', type);
+          return;
       }
+      
+      // Refresh data after successful deletion
+      await loadDashboardData();
       
     } catch (error) {
       console.error('Error deleting item:', error);
@@ -281,13 +238,27 @@ const AdminDashboard = () => {
       setIsLoading(true);
       
       if (modalMode === 'add') {
-        // Add new item
-        // const response = await api.createItem(addModalType, formData);
-        console.log('Adding new item:', addModalType, formData);
+        switch (addModalType) {
+          case 'user':
+            await adminAPI.addUser(formData);
+            break;
+          case 'vendor':
+            await adminAPI.addVendor(formData);
+            break;
+          default:
+            throw new Error('Invalid item type for addition');
+        }
       } else {
-        // Update existing item
-        // const response = await api.updateItem(addModalType, selectedItem.id, formData);
-        console.log('Updating item:', addModalType, selectedItem.id, formData);
+        switch (addModalType) {
+          case 'user':
+            await adminAPI.updateUser(selectedItem.id, formData);
+            break;
+          case 'vendor':
+            await adminAPI.updateVendor(selectedItem.id, formData);
+            break;
+          default:
+            throw new Error('Invalid item type for update');
+        }
       }
       
       // Refresh data

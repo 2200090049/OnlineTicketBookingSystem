@@ -53,6 +53,9 @@ public class AdminService {
         userResponse.put("status", user.getStatus());
         userResponse.put("avatar", user.getAvatar());
         userResponse.put("isVendor", user.isVendor());
+        userResponse.put("role", user.getRole());
+        userResponse.put("city", user.getCity());
+        userResponse.put("lastLogin", user.getLast_login());
         userResponse.put("vendorType", user.getVendorType() != null ? user.getVendorType().toString() : null);
         userResponse.put("createdAt", user.getCreated_at());
         userResponse.put("updatedAt", user.getUpdated_at());
