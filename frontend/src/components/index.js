@@ -7,3 +7,4 @@ export { default as SeatSelector } from './SeatSelector';
 // Navigation Components
 export { default as Navbar } from './Navbar';
 export { default as SubNavigation } from './SubNavigation';
+export { default as AdminSidebar } from './admin/AdminSidebar';

@@ -20,10 +20,7 @@ public class UserController {
     @Autowired
     private JwtUtil jwtUtil;
 
-    /**
-     * Get current user profile
-     * GET /api/user/me
-     */
+
     @GetMapping("/me")
     public ResponseEntity<Object> getMe(@RequestHeader("Authorization") String token) {
         try {
@@ -34,10 +31,7 @@ public class UserController {
         }
     }
 
-    /**
-     * Update current user profile
-     * PUT /api/user/update-me
-     */
+
     @PutMapping("/update-me")
     public ResponseEntity<Object> updateMe(@RequestBody Users updatedUser,
                                            @RequestHeader("Authorization") String token) {
@@ -49,10 +43,6 @@ public class UserController {
         }
     }
 
-    /**
-     * Delete current user account
-     * DELETE /api/user/delete-me
-     */
     @DeleteMapping("/delete-me")
     public ResponseEntity<Object> deleteMe(@RequestBody Map<String, String> request,
                                            @RequestHeader("Authorization") String token) {
@@ -65,10 +55,6 @@ public class UserController {
         }
     }
 
-    /**
-     * Change user password
-     * PUT /api/user/change-password
-     */
     @PutMapping("/change-password")
     public ResponseEntity<Object> changePassword(@RequestBody Map<String, String> request,
                                                  @RequestHeader("Authorization") String token) {
@@ -83,10 +69,6 @@ public class UserController {
         }
     }
 
-    /**
-     * Get user account status
-     * GET /api/user/status
-     */
     @GetMapping("/status")
     public ResponseEntity<Object> getUserStatus(@RequestHeader("Authorization") String token) {
         try {
@@ -102,10 +84,6 @@ public class UserController {
         }
     }
 
-    /**
-     * Update user avatar (if avatar functionality exists)
-     * PUT /api/user/avatar
-     */
     @PutMapping("/avatar")
     public ResponseEntity<Object> updateAvatar(@RequestBody Map<String, String> request,
                                                @RequestHeader("Authorization") String token) {

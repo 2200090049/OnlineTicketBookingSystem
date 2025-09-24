@@ -58,6 +58,7 @@ public class UserService {
         userResponse.put("phone", user.getPhone());
         userResponse.put("status", user.getStatus());
         userResponse.put("avatar", user.getAvatar());
+        userResponse.put("role", user.getRole());
         userResponse.put("isVendor", user.isVendor());
         userResponse.put("vendorType", user.getVendorType() != null ? user.getVendorType().toString() : null);
         userResponse.put("createdAt", user.getCreated_at());
