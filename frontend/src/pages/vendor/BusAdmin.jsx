@@ -5,7 +5,6 @@ import {
   TruckIcon,
   PencilIcon,
   TrashIcon,
-  EyeIcon,
   ClockIcon,
   MapPinIcon,
   CalendarIcon,
@@ -51,7 +50,7 @@ const BusAdmin = () => {
     console.log('Current user vendor type:', user.vendorType);
     
     // Check if user has proper vendor type for bus admin (USER role with BUSES_ADMIN vendor type, or ADMIN role)
-    if (!((user.role === 'USER' && user.vendorType === 'BUSES_ADMIN') || user.role === 'ADMIN')) {
+    if (!((user.role === 'VENDOR' && user.vendorType === 'BUSES_ADMIN') || user.role === 'ADMIN')) {
       console.log('Access denied - user role:', user.role, 'vendor type:', user.vendorType);
       alert('Access denied. You need BUSES_ADMIN vendor type or ADMIN role to access this page.');
       navigate('/user/dashboard');

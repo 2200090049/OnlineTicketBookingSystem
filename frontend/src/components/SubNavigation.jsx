@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { FilmIcon, TrophyIcon, TruckIcon, Cog6ToothIcon } from '@heroicons/react/24/outline';
+import { FilmIcon, TruckIcon, Cog6ToothIcon } from '@heroicons/react/24/outline';
 import PropTypes from 'prop-types';
 import { useAuth } from '../hooks/useAuth';
 import Button from './Button';
@@ -19,11 +19,6 @@ const SubNavigation = ({ className = '' }) => {
       name: 'Train Tickets',
       path: '/trains',
       icon: TruckIcon,
-    },
-    {
-      name: 'Sports',
-      path: '/sports',
-      icon: TrophyIcon,
     },
     {
       name: 'Buses',
