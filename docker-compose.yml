@@ -13,10 +13,10 @@ services:
       - springboot-mysql-net
 
   backend:
-    image: abhinay7/docker-backend:latest
+    image: abhinay7/onlineticketbookingsystem-frontend:latest
     container_name: springboot
     ports:
-      - "2025:2000"
+      - "2002:2002"
     depends_on:
       - mysqldb
     restart: on-failure
@@ -24,7 +24,7 @@ services:
       - springboot-mysql-net
 
   frontend:
-    image: abhinay7/docker-frontend:latest
+    image: abhinay7/onlineticketbookingsystem-frontend:latest
     container_name: react
     ports:
       - "3000:80"
